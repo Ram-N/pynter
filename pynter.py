@@ -11,6 +11,25 @@ Ram Narasimhan
 Pynter is derived from: Doodlrr by Eric Hamilton erickenneth91@gmail.com
 """
 
+PALETTE = {
+    "black": (1, 1),
+    "Gray50": (1, 2),
+    "darkred": (3, 1),
+    "red": (4, 1),
+    "orange": (5, 1),
+    "yellow": (6, 1),
+    "green": (7, 1),
+    "blue": (9, 1),
+    "purple": (10, 1),
+    "white": (1, 2),
+    "Gray25": (2, 2),
+    "brown": (3, 2),
+    "lime": (7, 2),
+    "light turquoise": (8, 2),
+    "blue-gray": (9, 2),
+    "lavender": (10, 2),
+}
+
 
 class Canvas:
     def __init__(self, width, height, MANUAL_CANVAS=False):
@@ -26,7 +45,6 @@ class Canvas:
     def manually_calibrate_canvas(self):
         print("CALIBRATING ORIGIN POINT of CANVAS:")
         print("Hold your cursor at the TOP LEFT corner of the image canvas")
-        print("Get it as close as possible")
         wait_loop(WAIT_SECONDS)
         self.origin = pg.position()
         self.endpoint = (self.origin[0] + self.width, self.origin[1] + self.height)
@@ -330,22 +348,6 @@ NUM_BRUSH_SIZES = 4
 WAIT_SECONDS = 5
 ONE_IN_10 = 90
 ONE_IN_20 = 95
-
-PALETTE = {
-    "black": (1, 1),
-    "darkred": (3, 1),
-    "red": (4, 1),
-    "orange": (5, 1),
-    "yellow": (6, 1),
-    "green": (7, 1),
-    "blue": (9, 1),
-    "purple": (10, 1),
-    "white": (1, 2),
-    "Gray25": (2, 2),
-    "brown": (3, 2),
-    "blue-gray": (9, 2),
-    "lavender": (10, 2),
-}
 
 
 if __name__ == "__main__":
