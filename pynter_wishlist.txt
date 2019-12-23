@@ -6,6 +6,9 @@ COLOR PALETTE (BLUES, BRIGHT, PASTEL etc)
 Comment every single function
 Get more colors added
 Auto CHange Brush TYPE
+
+Add a Print MSP function __print__() to Class
+
 CHange Background
 Save the Drawing
 Add Eraser

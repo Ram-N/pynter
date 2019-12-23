@@ -24,6 +24,7 @@ PALETTE = {
     "white": (1, 2),
     "Gray25": (2, 2),
     "brown": (3, 2),
+    "light-yellow": (6, 2),
     "lime": (7, 2),
     "light turquoise": (8, 2),
     "blue-gray": (9, 2),
@@ -32,6 +33,7 @@ PALETTE = {
 
 
 class Canvas:
+
     def __init__(self, width, height, MANUAL_CANVAS=False):
         self.width = width
         self.height = height
@@ -122,6 +124,7 @@ class Canvas:
 
 
 class MSPaint:
+
     def __init__(self, wait, MANUAL_COLOR=False, MANUAL_SIZE=False):
 
         self.wait = 5  # Seconds to wait
@@ -129,12 +132,22 @@ class MSPaint:
         self.swatch_bottom_right = (1723, 141)
         self.swatch_offset = (32, 46)
         self.brush_size_btn = (1239, 125)
+        self.brush_type_btn = (1224, 125)
+
         self.size_options = (217, 261, 310, 392)
 
         if MANUAL_COLOR:
             self.manually_calibrate_colors()
         if MANUAL_SIZE:
             self.manually_calibrate_size()
+
+    def manually_calibrate(self, btn_name):
+        pretext = f"Move cursor to {btn_name}"
+        posttext = f"Captured {btn_name}"
+        btn_pos = capture_coords(btn_name, pretext, posttext)
+        if btn_name == 'Brushes':
+            self.brush_type_btn = btn_pos
+
 
     def manually_calibrate_colors(self):
         print("Move Cursor to the top left color swatch in Paint")
@@ -153,24 +166,20 @@ class MSPaint:
         print(f"Color Button Offset {self.swatch_offset}")
 
     def manually_calibrate_size(self):
-        print("CALIBRATING BRUSH SIZES")
-        print("Move your cursor to the Brush Size Button")
-        wait_loop(self.wait)
-        self.brush_size_btn = pg.position()
-        print("Captured")
+        btn = 'Brush-size-selector'
+        pretext = "CALIBRATING BRUSH SIZES \n Move your cursor to the Brush Size Button"
+        posttext = 'Captured' + " " +  btn
+        self.brush_size_btn = capture_coords(btn, pretext, posttext)
 
-        print("Move the cursor to the smallest brush size option")
-        print(
-            "First Click the size selection Button, then move to the smallest thickness"
-        )
-        wait_loop(self.wait)
-        small_pos = pg.position()
-        print(f"Captured Small Brush @ {small_pos}")
-
-        print("Move the cursor to the largest brush size option")
-        wait_loop(self.wait)
-        big_pos = pg.position()
-        print(f"Captured Largest Brush @ {big_pos}")
+        pretext = "Move the cursor to the smallest brush size option\n \
+            First Click the size selection Button, then move to the smallest thickness"
+        posttext = "Captured Small Brush"
+        small_pos = capture_coords(btn, pretext, posttext)        
+        
+        pretext = "Move the cursor to the biggest brush size option\n \
+            First Click the size selection Button, then move to the biggest thickness"
+        posttext = "Captured Biggest Brush Coords"
+        big_pos = capture_coords(btn, pretext, posttext)        
 
         small_y = small_pos[1]
         big_y = big_pos[1]
@@ -237,6 +246,13 @@ def wait_loop(wait_time):
         print(str(count) + "...", end=" ", flush=True)
         time.sleep(1)
         count -= 1
+
+def capture_coords(btn, pretext='', posttext=''):
+    """ Generic function to return location of a single item in MSP """
+    print(pretext)
+    wait_loop(WAIT_SECONDS)
+    print(posttext)
+    return pg.position()
 
 
 def curve(cv):
@@ -329,11 +345,12 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
 def main():
 
     cv = Canvas(900, 504, MANUAL_CANVAS=False)
-    msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
+    msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=True)
     # msp.pick_color("orange")
     # msp.click()
     # cv.draw_line((1200, 500), (1400, 500))
     msp.display_all_sizes()
+    msp.manually_calibrate('Brushes')
 
     # cv = recaliberate(cv, CANVAS_VARIABLE=False)
 
