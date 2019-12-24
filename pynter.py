@@ -13,17 +13,20 @@ Pynter is derived from: Doodlrr by Eric Hamilton erickenneth91@gmail.com
 
 PALETTE = {
     "black": (1, 1),
-    "Gray50": (1, 2),
+    "Gray50": (2, 1),
     "darkred": (3, 1),
     "red": (4, 1),
     "orange": (5, 1),
     "yellow": (6, 1),
     "green": (7, 1),
+    "turquoise": (8, 1),
     "blue": (9, 1),
     "purple": (10, 1),
     "white": (1, 2),
     "Gray25": (2, 2),
     "brown": (3, 2),
+    "rose": (4, 2),
+    "gold": (5, 2),
     "light-yellow": (6, 2),
     "lime": (7, 2),
     "light turquoise": (8, 2),
@@ -31,9 +34,20 @@ PALETTE = {
     "lavender": (10, 2),
 }
 
+BRUSH_STYLES = {
+    "brush": (1, 1),
+    "callig brush1": (1, 2),
+    "callig brush2": (1, 3),
+    "Airbrush": (1, 4),
+    "oil": (2, 1),
+    "crayon": (2, 2),
+    "marker": (2, 3),
+    "pencil": (2, 4),
+    "watercolor": (1, 3),
+}
+
 
 class Canvas:
-
     def __init__(self, width, height, MANUAL_CANVAS=False):
         self.width = width
         self.height = height
@@ -72,7 +86,7 @@ class Canvas:
         pos = pg.position()
         startX = pos[0]
         startY = pos[1]
-        stroke_len = random.randint(2, 30)  # PARAMETRIZE
+        stroke_len = random.randint(MIN_STROKE_LEN, MAX_STROKE_LEN)  # PARAMETRIZE
 
         found = 0
         while not found:
@@ -107,10 +121,15 @@ class Canvas:
 
         """
         for stroke in range(num_strokes):
-            if random.randint(0, 100) > ONE_IN_10:
-                msp.pick_color()
-            if random.randint(0, 100) > ONE_IN_20:
-                msp.pick_size()
+            if random.randint(0, 100) > COLOR_CHANGE_THRESHOLD:
+                msp.pick_item(item_type="color", selected="")
+
+            if random.randint(0, 100) > SIZE_CHANGE_THRESHOLD:
+                msp.pick_item(item_type="brush-size", selected="")
+
+            if random.randint(0, 100) > STYLE_CHANGE_THRESHOLD:
+                msp.pick_item(item_type="brush-style", selected="")
+
             # if random.randint(0,100) > 75:
             #    curve()
             startX = random.randint(self.origin[0], self.endpoint[0])
@@ -124,7 +143,6 @@ class Canvas:
 
 
 class MSPaint:
-
     def __init__(self, wait, MANUAL_COLOR=False, MANUAL_SIZE=False):
 
         self.wait = 5  # Seconds to wait
@@ -132,7 +150,7 @@ class MSPaint:
         self.swatch_bottom_right = (1723, 141)
         self.swatch_offset = (32, 46)
         self.brush_size_btn = (1239, 125)
-        self.brush_type_btn = (1224, 125)
+        self.brush_style_btn = (1224, 125)
 
         self.size_options = (217, 261, 310, 392)
 
@@ -145,9 +163,20 @@ class MSPaint:
         pretext = f"Move cursor to {btn_name}"
         posttext = f"Captured {btn_name}"
         btn_pos = capture_coords(btn_name, pretext, posttext)
-        if btn_name == 'Brushes':
-            self.brush_type_btn = btn_pos
 
+        if btn_name == "Brushes":
+            self.brush_style_btn = btn_pos
+            self.style_LL = capture_coords(
+                btn_name, "Move to the lower left (watercolor) brush", "captured"
+            )
+            self.style_TR = capture_coords(
+                btn_name, "Move to the upper right (Airbrush) button", "captured"
+            )
+            NUM_ROWS, NUM_COLS = 3, 4
+            offsetX = (self.style_TR[0] - self.style_LL[0]) / (NUM_COLS - 1)
+            offsetY = self.style_LL[1] - self.style_TR[1] / (NUM_ROWS - 1)
+            self.brush_style_offset = (offsetX, offsetY)
+            print(f"Brush Button Offset {self.brush_style_offset}")
 
     def manually_calibrate_colors(self):
         print("Move Cursor to the top left color swatch in Paint")
@@ -166,20 +195,20 @@ class MSPaint:
         print(f"Color Button Offset {self.swatch_offset}")
 
     def manually_calibrate_size(self):
-        btn = 'Brush-size-selector'
+        btn = "Brush-size-selector"
         pretext = "CALIBRATING BRUSH SIZES \n Move your cursor to the Brush Size Button"
-        posttext = 'Captured' + " " +  btn
+        posttext = "Captured" + " " + btn
         self.brush_size_btn = capture_coords(btn, pretext, posttext)
 
         pretext = "Move the cursor to the smallest brush size option\n \
             First Click the size selection Button, then move to the smallest thickness"
-        posttext = "Captured Small Brush"
-        small_pos = capture_coords(btn, pretext, posttext)        
-        
+        posttext = "Captured Small Brush\n\n"
+        small_pos = capture_coords(btn, pretext, posttext)
+
         pretext = "Move the cursor to the biggest brush size option\n \
             First Click the size selection Button, then move to the biggest thickness"
-        posttext = "Captured Biggest Brush Coords"
-        big_pos = capture_coords(btn, pretext, posttext)        
+        posttext = "Captured Biggest Brush Coords\n\n"
+        big_pos = capture_coords(btn, pretext, posttext)
 
         small_y = small_pos[1]
         big_y = big_pos[1]
@@ -192,22 +221,72 @@ class MSPaint:
         )
         print(f"Brushes between: {big_pos}, {small_pos}")
 
-    def color_button_coords(self, color):
-        """ returns the X,Y coords of any selected Color on Paint App"""
-        (btn_idx_x, btn_idx_y) = PALETTE.get(color)
-        x = self.swatch_top_left[0] + (btn_idx_x - 1) * self.swatch_offset[0]
-        y = self.swatch_top_left[1] + (btn_idx_y - 1) * self.swatch_offset[1]
-        return (x, y)
+    def get_selected_items_coords(self, item_type, selected):
+        """ returns the X,Y coords of any selected item on Paint App
+        
+        item_type can be 'color', 'brush-size' or 'brush-style'
+        """
 
-    def pick_color(self, color=""):
+        if item_type=='color':
+            (btn_idx_x, btn_idx_y) = PALETTE.get(selected)
+            x = self.swatch_top_left[0] + (btn_idx_x - 1) * self.swatch_offset[0]
+            y = self.swatch_top_left[1] + (btn_idx_y - 1) * self.swatch_offset[1]
+            return (x, y)
 
-        if color == "":
-            color = random.choice(list(PALETTE.keys()))
-        color_xy = self.color_button_coords(color)
-        print(f"{color} @ {color_xy}")
-        pg.moveTo(color_xy)
-        time.sleep(0.5)
-        pg.click(color_xy)  # select the color
+        if item_type == 'brush-style':
+            (btn_idx_y, btn_idx_x) = BRUSH_STYLES.get(selected)
+            x = self.style_LL[0] + (btn_idx_x - 1) * self.brush_style_offset[0]
+            y = self.style_TR[1] + (btn_idx_y - 1) * self.brush_style_offset[1]
+            return (x, y)
+
+
+    def pick_item(self, item_type="color", selected=""):
+
+        if item_type == "color":
+            if selected == "":
+                color = random.choice(list(PALETTE.keys()))
+            else:
+                color = selected
+
+            color_xy = self.get_selected_items_coords(item_type, color)
+            print(f"{color} @ {color_xy}")
+            pg.moveTo(color_xy)
+            time.sleep(0.5)
+            pg.click(color_xy)  # select the color
+
+        if item_type == "brush-size":
+            pg.moveTo(self.brush_size_btn)
+            pg.click()
+
+            if selected == "":
+                brush_size_y = random.choice(self.size_options)
+            else:
+                assert self.size_options in [0, 1, 2, 3]
+                brush_size_y = self.size_options[selected]
+
+            pg.moveTo(self.brush_size_btn[0], brush_size_y)
+            time.sleep(0.25)
+            pg.click()
+            if VERBOSE:
+                print(f"Size {brush_size_y}, size_position {self.brush_size_btn}")
+
+        if item_type == "brush-style":
+            pg.moveTo(self.brush_style_btn)
+            pg.click()
+            time.sleep(0.5)
+
+            if selected == "":
+                style = random.choice(list(BRUSH_STYLES.keys()))
+            else:
+                style = selected
+
+            pos_xy = self.get_selected_items_coords(item_type, style)
+            print(f"{item_type} {style} @ {pos_xy}")
+            pg.moveTo(pos_xy)
+            time.sleep(0.5)
+            pg.click(pos_xy)  # select the indiv item
+
+
 
     def click(self):
         pg.click()
@@ -217,21 +296,7 @@ class MSPaint:
         print(f"swatch top left {self.swatch_top_left}")
         print(f"swatch offset {self.swatch_offset}")
         for c, ci in PALETTE.items():
-            print(f"{c}, {ci}, {self.color_button_coords(c)}")
-
-    def pick_size(self, brush_size_y=""):
-
-        pg.moveTo(self.brush_size_btn)
-        pg.click()
-
-        if brush_size_y == "":
-            brush_size_y = random.choice(self.size_options)
-
-        pg.moveTo(self.brush_size_btn[0], brush_size_y)
-        time.sleep(0.25)
-        pg.click()
-        if VERBOSE:
-            print(f"SELECTED size {brush_size_y}, size_position {self.brush_size_btn}")
+            print(f"{c}, {ci}, {self.get_selected_items_coords('color', c)}")
 
     def display_all_sizes(self):
         print(f"Size options are {self.size_options}")
@@ -247,7 +312,8 @@ def wait_loop(wait_time):
         time.sleep(1)
         count -= 1
 
-def capture_coords(btn, pretext='', posttext=''):
+
+def capture_coords(btn, pretext="", posttext=""):
     """ Generic function to return location of a single item in MSP """
     print(pretext)
     wait_loop(WAIT_SECONDS)
@@ -345,12 +411,12 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
 def main():
 
     cv = Canvas(900, 504, MANUAL_CANVAS=False)
-    msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=True)
+    msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
     # msp.pick_color("orange")
     # msp.click()
     # cv.draw_line((1200, 500), (1400, 500))
     msp.display_all_sizes()
-    msp.manually_calibrate('Brushes')
+    msp.manually_calibrate("Brushes")
 
     # cv = recaliberate(cv, CANVAS_VARIABLE=False)
 
@@ -358,13 +424,23 @@ def main():
         cv = display_menu(msp, cv, SPECIFY_NUM_TICKS=False)
 
 
+# These should all eventually come either from cfg file or cmdline args
 VERBOSE = True
 SPECIFY_NUM_TICKS = False
+NUM_TICKS = 100
 NUM_COLOR_BUTTONS = (10, 2)
 NUM_BRUSH_SIZES = 4
 WAIT_SECONDS = 5
-ONE_IN_10 = 90
-ONE_IN_20 = 95
+COLOR_CHANGE_THRESHOLD = 95
+SIZE_CHANGE_THRESHOLD = 95
+BRUSH_CHANGE_THRESHOLD = 90
+STYLE_CHANGE_THRESHOLD = 97
+STYLE_CHANGE = True
+COLOR_CHANGE = True
+SIZE_CHANGE = True
+
+MAX_STROKE_LEN = 30
+MIN_STROKE_LEN = 5
 
 
 if __name__ == "__main__":

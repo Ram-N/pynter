@@ -1,21 +1,29 @@
 Pynter 0.1.0
 
 
+Add a Print MSP function __print__() to Class MSP
+
 COLOR PALETTE (BLUES, BRIGHT, PASTEL etc)
 
-Comment every single function
-Get more colors added
-Auto CHange Brush TYPE
-
-Add a Print MSP function __print__() to Class
-
-CHange Background
-Save the Drawing
+Add tools, shapes
+Fill Tool
 Add Eraser
-Fill Background
+
+Comment every single function
+Take a video recording of Pynter in action
+Add Argparse and ConfigParse
+
+Ability to Change Background
+Save the Drawing
+
+Create a gh-pages branch, and add examples
 
 Modes:
    Geometric fills. (V shaped lines. Radials. )
    Blues...
 
-Take a video recording of Pynter in action.
+Colors: (BLUES, REDS, GREENS, YELLOWS, PASTEL, MUTED, GRAYS, B&W)
+ARCS: Long, short, medium, fixed_length, fixed angles, only a few angles
+StartX: Uniform spaced
+EndX: Angles, straight 90-180
+Starburst, Fireworks, 
