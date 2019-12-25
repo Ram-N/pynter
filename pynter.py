@@ -43,20 +43,23 @@ BRUSH_STYLES = {
     "crayon": (2, 2),
     "marker": (2, 3),
     "pencil": (2, 4),
-    "watercolor": (1, 3),
+    "watercolor": (3, 1),
 }
 
 
 class Canvas:
-    def __init__(self, width, height, MANUAL_CANVAS=False):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         self.origin = (861, 228)
         self.endpoint = (1761, 732)
         self.center = (1311.0, 480.0)
 
-        if MANUAL_CANVAS:
-            self.manually_calibrate_canvas()
+    def __str__(self):
+        return f" Canvas object: {self.width} by {self.height} \
+                \n Origin = {self.origin}\
+                \n End = {self.endpoint}   \
+                \n Center =  {self.center}\n"
 
     def manually_calibrate_canvas(self):
         print("CALIBRATING ORIGIN POINT of CANVAS:")
@@ -150,8 +153,10 @@ class MSPaint:
         self.swatch_bottom_right = (1723, 141)
         self.swatch_offset = (32, 46)
         self.brush_size_btn = (1239, 125)
-        self.brush_style_btn = (1224, 125)
-
+        self.brush_style_btn = (1099, 175)
+        self.style_TR = (1098, 218)
+        self.style_LL = (923, 324)
+        self.brush_style_offset = (63, 59)
         self.size_options = (217, 261, 310, 392)
 
         if MANUAL_COLOR:
@@ -159,24 +164,41 @@ class MSPaint:
         if MANUAL_SIZE:
             self.manually_calibrate_size()
 
+        self.calculate_offset("brush-style")
+
+    def __str__(self):
+        return f" MS Paint object: \n COLOR TL {self.swatch_top_left} \
+            \n COLOR BR = {self.swatch_bottom_right} \
+            \n Color offset = {self.swatch_offset}  \
+            \n Size Btn =  {self.brush_size_btn} \
+            \n Size Options =  {self.size_options} \
+            \n Style Btn = {self.brush_style_btn} \
+            \n Style TR {self.style_TR}, Style LL {self.style_LL}"
+
     def manually_calibrate(self, btn_name):
         pretext = f"Move cursor to {btn_name}"
-        posttext = f"Captured {btn_name}"
+        posttext = f"Captured {btn_name}\n"
         btn_pos = capture_coords(btn_name, pretext, posttext)
 
         if btn_name == "Brushes":
             self.brush_style_btn = btn_pos
             self.style_LL = capture_coords(
-                btn_name, "Move to the lower left (watercolor) brush", "captured"
+                btn_name, "Move to the lower left (watercolor) brush", "captured\n"
             )
             self.style_TR = capture_coords(
-                btn_name, "Move to the upper right (Airbrush) button", "captured"
+                btn_name, "Move to the upper right (Airbrush) button", "captured\n"
             )
+
+            self.calculate_offset("brush-style")
+
+    def calculate_offset(self, item_type):
+
+        if item_type == "brush-style":
             NUM_ROWS, NUM_COLS = 3, 4
             offsetX = (self.style_TR[0] - self.style_LL[0]) / (NUM_COLS - 1)
-            offsetY = self.style_LL[1] - self.style_TR[1] / (NUM_ROWS - 1)
-            self.brush_style_offset = (offsetX, offsetY)
-            print(f"Brush Button Offset {self.brush_style_offset}")
+            offsetY = (self.style_LL[1] - self.style_TR[1]) / (NUM_ROWS - 1)
+            self.brush_style_offset = (int(offsetX), int(offsetY))
+            print(f"Brush Button Offset X, Y is {self.brush_style_offset}")
 
     def manually_calibrate_colors(self):
         print("Move Cursor to the top left color swatch in Paint")
@@ -227,18 +249,17 @@ class MSPaint:
         item_type can be 'color', 'brush-size' or 'brush-style'
         """
 
-        if item_type=='color':
+        if item_type == "color":
             (btn_idx_x, btn_idx_y) = PALETTE.get(selected)
             x = self.swatch_top_left[0] + (btn_idx_x - 1) * self.swatch_offset[0]
             y = self.swatch_top_left[1] + (btn_idx_y - 1) * self.swatch_offset[1]
             return (x, y)
 
-        if item_type == 'brush-style':
+        if item_type == "brush-style":
             (btn_idx_y, btn_idx_x) = BRUSH_STYLES.get(selected)
             x = self.style_LL[0] + (btn_idx_x - 1) * self.brush_style_offset[0]
             y = self.style_TR[1] + (btn_idx_y - 1) * self.brush_style_offset[1]
             return (x, y)
-
 
     def pick_item(self, item_type="color", selected=""):
 
@@ -247,6 +268,7 @@ class MSPaint:
                 color = random.choice(list(PALETTE.keys()))
             else:
                 color = selected
+                print(color)
 
             color_xy = self.get_selected_items_coords(item_type, color)
             print(f"{color} @ {color_xy}")
@@ -273,7 +295,7 @@ class MSPaint:
         if item_type == "brush-style":
             pg.moveTo(self.brush_style_btn)
             pg.click()
-            time.sleep(0.5)
+            time.sleep(0.8)
 
             if selected == "":
                 style = random.choice(list(BRUSH_STYLES.keys()))
@@ -283,10 +305,18 @@ class MSPaint:
             pos_xy = self.get_selected_items_coords(item_type, style)
             print(f"{item_type} {style} @ {pos_xy}")
             pg.moveTo(pos_xy)
-            time.sleep(0.5)
+            time.sleep(0.8)
             pg.click(pos_xy)  # select the indiv item
 
+    def pick_all_items(self, item_type=""):
 
+        if item_type == "brush-style":
+            for k, _ in BRUSH_STYLES.items():
+                self.pick_item("brush-style", selected=k)
+
+        if item_type == "color":
+            for k, _ in PALETTE.items():
+                self.pick_item("color", selected=k)
 
     def click(self):
         pg.click()
@@ -380,13 +410,14 @@ def get_coords(repeat):
 
 def display_menu(msp, cv, SPECIFY_NUM_TICKS):
     print("Type a Number and Press Enter:")
-    print("1: Draw")
-    print("2: Get Cursor Coords")
-    print("3: Let's recalibrate")
-    print("4: 4 corners")
+    print("1: Draw  2: Get Cursor Coords")
+    print("3: Recalibrate Coords  4: 4 corners of the Canvas")
+    print("5: Print Canvas and MSP Coords \t 6. Show Size and Brush-type Btns")
+
     result = input()
+
     if result == "1":
-        print("ctrl alt del to abort")
+        print("Press ctrl alt del to abort")
         ticks = 100
         if SPECIFY_NUM_TICKS:
             ticks = input()
@@ -402,6 +433,24 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
         cv = recaliberate(cv, CANVAS_VARIABLE=False)
     if result == "4":
         get_4_points(5)
+    if result == "5":
+        print(cv)
+        print(msp)
+    if result == "6":
+        wait_loop(WAIT_SECONDS)
+        pg.moveTo(msp.brush_size_btn)
+        time.sleep(0.5)
+
+        pg.moveTo(msp.brush_style_btn)
+        time.sleep(0.5)
+        pg.click()
+        time.sleep(0.5)
+        msp.pick_item(item_type="brush-style", selected="")
+
+    if result == "7":
+        # msp.pick_all_items("brush-style")
+        msp.pick_all_items("color")
+
     if result == "x":
         sys.exit()
 
@@ -410,16 +459,18 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
 
 def main():
 
-    cv = Canvas(900, 504, MANUAL_CANVAS=False)
+    cv = Canvas(900, 504)
     msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
     # msp.pick_color("orange")
     # msp.click()
     # cv.draw_line((1200, 500), (1400, 500))
+    # cv.manually_calibrate_canvas()
     msp.display_all_sizes()
-    msp.manually_calibrate("Brushes")
+    # msp.manually_calibrate("Brushes")
 
+    print(cv)
+    print(msp)
     # cv = recaliberate(cv, CANVAS_VARIABLE=False)
-
     while True:
         cv = display_menu(msp, cv, SPECIFY_NUM_TICKS=False)
 

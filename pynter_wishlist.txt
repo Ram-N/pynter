@@ -1,9 +1,10 @@
 Pynter 0.1.0
 
 
-Add a Print MSP function __print__() to Class MSP
+Add a method to PRINT all brush styles, all colors, all sizes
+Add a test-paint method to draw brushes, styles, colors...
 
-COLOR PALETTE (BLUES, BRIGHT, PASTEL etc)
+Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
 
 Add tools, shapes
 Fill Tool
@@ -24,6 +25,7 @@ Modes:
 
 Colors: (BLUES, REDS, GREENS, YELLOWS, PASTEL, MUTED, GRAYS, B&W)
 ARCS: Long, short, medium, fixed_length, fixed angles, only a few angles
-StartX: Uniform spaced
+
+StartX: Uniform spaced, =prev_End_x (so it draws one continuous doodle)
 EndX: Angles, straight 90-180
 Starburst, Fireworks, 
