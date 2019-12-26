@@ -46,6 +46,8 @@ BRUSH_STYLES = {
     "watercolor": (3, 1),
 }
 
+BRUSH_SIZES = {"8px": 0, "16px": 1, "30px": 2, "40px": 3}
+
 
 class Canvas:
     def __init__(self, width, height):
@@ -244,11 +246,14 @@ class MSPaint:
         print(f"Brushes between: {big_pos}, {small_pos}")
 
     def get_selected_items_coords(self, item_type, selected):
-        """ returns the X,Y coords of any selected item on Paint App
+        """ 
+        Returns the X,Y coords of any selected item on Paint App
         
-        item_type can be 'color', 'brush-size' or 'brush-style'
+        Parameters
+        ----------
+        item_type : str
+            The MS Paint item. One of {'color', 'brush-style'}
         """
-
         if item_type == "color":
             (btn_idx_x, btn_idx_y) = PALETTE.get(selected)
             x = self.swatch_top_left[0] + (btn_idx_x - 1) * self.swatch_offset[0]
@@ -283,8 +288,8 @@ class MSPaint:
             if selected == "":
                 brush_size_y = random.choice(self.size_options)
             else:
-                assert self.size_options in [0, 1, 2, 3]
-                brush_size_y = self.size_options[selected]
+                b_index = BRUSH_SIZES[selected]
+                brush_size_y = self.size_options[b_index]
 
             pg.moveTo(self.brush_size_btn[0], brush_size_y)
             time.sleep(0.25)
@@ -308,15 +313,42 @@ class MSPaint:
             time.sleep(0.8)
             pg.click(pos_xy)  # select the indiv item
 
-    def pick_all_items(self, item_type=""):
+    def test_all_items(self, action_type="print", item_type="color"):
+        """ 
+        This is a debugging and re-calibrating method.
 
-        if item_type == "brush-style":
-            for k, _ in BRUSH_STYLES.items():
-                self.pick_item("brush-style", selected=k)
+        There are 3 things that this function can do.
+        Print the coords on the screen,CLICK each item, or
+        DRAW with each item. (This requires calculating coords)
 
-        if item_type == "color":
-            for k, _ in PALETTE.items():
-                self.pick_item("color", selected=k)
+        Parameters
+        ----------
+        action_type : str
+            One of {'print', 'click', 'draw'}. 'print' will display all the releated 
+            coords in the terminal. 'click' will sequentially click each button in the item_type.
+            'draw' will actually use the tool of interest and render it on the canvas. 
+        item_type : str
+            The MS Paint item. One of {'color', 'brush-style', 'brush-size'}
+        """
+        if action_type == "click":
+            if item_type == "brush-style":
+                for k, _ in BRUSH_STYLES.items():
+                    self.pick_item(item_type, selected=k)
+
+            if item_type == "color":
+                for k, _ in PALETTE.items():
+                    self.pick_item(item_type, selected=k)
+
+            if item_type == "brush-size":
+                for k, _ in BRUSH_SIZES.items():
+                    self.pick_item(item_type, selected=k)
+
+        elif action_type == "print":
+            pass
+        elif action_type == "draw":
+            pass
+        else:
+            return
 
     def click(self):
         pg.click()
@@ -341,6 +373,7 @@ def wait_loop(wait_time):
         print(str(count) + "...", end=" ", flush=True)
         time.sleep(1)
         count -= 1
+    print()
 
 
 def capture_coords(btn, pretext="", posttext=""):
@@ -409,10 +442,15 @@ def get_coords(repeat):
 
 
 def display_menu(msp, cv, SPECIFY_NUM_TICKS):
-    print("Type a Number and Press Enter:")
-    print("1: Draw  2: Get Cursor Coords")
-    print("3: Recalibrate Coords  4: 4 corners of the Canvas")
+    print("\nEnter (Type) an option and Press Enter:")
+    print(
+        "1: Draw  2: Get Cursor Coords 3: Recalibrate Coords \t \
+        4: 4 corners of the Canvas"
+    )
     print("5: Print Canvas and MSP Coords \t 6. Show Size and Brush-type Btns")
+    print("7pc. Print all colors \t 7pb. Print all Brushes \t 7ps. Print all Sizes")
+    print("8cc. Click all colors \t 8cb. Click all Brushes \t 8cs. Click all Sizes")
+    print("9dc. Draw all colors \t 9db. Draw all Brushes \t 9ds. Draw all Sizes")
 
     result = input()
 
@@ -447,9 +485,14 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
         time.sleep(0.5)
         msp.pick_item(item_type="brush-style", selected="")
 
-    if result == "7":
-        # msp.pick_all_items("brush-style")
-        msp.pick_all_items("color")
+    test_d = {
+        "8cc": ("click", "color"),
+        "8cb": ("click", "brush-style"),
+        "8cs": ("click", "brush-size"),
+    }
+    if result in test_d:
+        wait_loop(WAIT_SECONDS)
+        msp.test_all_items(test_d[result][0], test_d[result][1])
 
     if result == "x":
         sys.exit()

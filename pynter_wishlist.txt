@@ -1,8 +1,10 @@
 Pynter 0.1.0
 
 
-Add a method to PRINT all brush styles, all colors, all sizes
-Add a test-paint method to draw brushes, styles, colors...
+Add a method to DEMO all brush styles, all colors, all sizes on the Canvas
+Add a method to PRINT COORDS of all brushes, colors and sizes
+Add a method to click all brushes, colors, sizes
+
 
 Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
 
@@ -19,6 +21,9 @@ Save the Drawing
 
 Create a gh-pages branch, and add examples
 
+
+Art Director Page/Syntax
+
 Modes:
    Geometric fills. (V shaped lines. Radials. )
    Blues...
@@ -29,3 +34,7 @@ ARCS: Long, short, medium, fixed_length, fixed angles, only a few angles
 StartX: Uniform spaced, =prev_End_x (so it draws one continuous doodle)
 EndX: Angles, straight 90-180
 Starburst, Fireworks, 
+Limited Brushes, not all
+
+Underline with a black/gray shadow. (This should be fun to try
+Each stroke also gets an random black/gray25/gray50 underline, with a small offset)
