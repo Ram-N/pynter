@@ -11,7 +11,7 @@ Ram Narasimhan
 Pynter is derived from: Doodlrr by Eric Hamilton erickenneth91@gmail.com
 """
 
-PALETTE = {
+ALL_COLORS = {
     "black": (1, 1),
     "Gray50": (2, 1),
     "darkred": (3, 1),
@@ -50,12 +50,13 @@ BRUSH_SIZES = {"8px": 0, "16px": 1, "30px": 2, "40px": 3}
 
 
 class Canvas:
-    def __init__(self, width, height):
+    def __init__(self, width, height, palette):
         self.width = width
         self.height = height
         self.origin = (861, 228)
         self.endpoint = (1761, 732)
         self.center = (1311.0, 480.0)
+        self.palette = palette
 
     def __str__(self):
         return f" Canvas object: {self.width} by {self.height} \
@@ -78,7 +79,34 @@ class Canvas:
         print(f"center {self.center}")
         print(f"Canvas End {self.endpoint}")
 
-    def draw_line(self, st, end):
+    def draw_line(self, msp, st, end, color="", brush_size="", brush_style=""):
+        """ Draws a line from startxy to endxy, with specified items.
+
+        st to end, using the color/size/brush type. If any of these are 
+        not specified, just the default that it came with is used to draw
+        the straight line.
+
+        Parameters
+        ----------
+        st: tuple 
+            The coordinates of the starting point
+        end: tuple 
+            The coordinates of the end point
+        color : str
+            One of the colors in ALL_COLORS
+        brush_size : str
+            One of the colors in BRUSH_SIZES
+        brush_style : str
+            One of the brushes in in BRUSH_STYLES
+        """
+
+        if color != "":
+            msp.pick_item("color", selected=color)
+        if brush_size != "":
+            msp.pick_item("brush_size", selected=brush_size)
+        if brush_style != "":
+            msp.pick_item("brush_style", selected=brush_style)
+
         start_x, start_y = st[0], st[1]
         end_x, end_y = end[0], end[1]
         # print(start_x, start_y, end_x, end_y)
@@ -115,7 +143,7 @@ class Canvas:
                 # print(f'new move coords {end_x} {end_y}')
                 return (end_x, end_y)
 
-    def draw(self, msp, num_strokes):
+    def draw(self, msp, num_strokes=10, *args):
         """This is the main function where the painting happens.
 
         Args:
@@ -125,31 +153,36 @@ class Canvas:
             None. Just defailts to rendering the menu
 
         """
-        for stroke in range(num_strokes):
-            if random.randint(0, 100) > COLOR_CHANGE_THRESHOLD:
-                msp.pick_item(item_type="color", selected="")
 
-            if random.randint(0, 100) > SIZE_CHANGE_THRESHOLD:
-                msp.pick_item(item_type="brush-size", selected="")
+        for arg in args:
 
-            if random.randint(0, 100) > STYLE_CHANGE_THRESHOLD:
-                msp.pick_item(item_type="brush-style", selected="")
+            if arg == "full_random":
+                for stroke in range(num_strokes):
+                    if random.randint(0, 100) > COLOR_CHANGE_THRESHOLD:
+                        msp.pick_item(item_type="color", selected="")
 
-            # if random.randint(0,100) > 75:
-            #    curve()
-            startX = random.randint(self.origin[0], self.endpoint[0])
-            startY = random.randint(self.origin[1], self.endpoint[1])
-            pg.moveTo(startX, startY)
-            end_x, end_y = self.get_stroke_endpoint()
-            self.draw_line((startX, startY), (end_x, end_y))
-            # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
-            if stroke % 10 == 0:
-                print(stroke)
+                    if random.randint(0, 100) > SIZE_CHANGE_THRESHOLD:
+                        msp.pick_item(item_type="brush_size", selected="")
+
+                    if random.randint(0, 100) > STYLE_CHANGE_THRESHOLD:
+                        msp.pick_item(item_type="brush_style", selected="")
+
+                    # if random.randint(0,100) > 75:
+                    #    curve()
+                    startX = random.randint(self.origin[0], self.endpoint[0])
+                    startY = random.randint(self.origin[1], self.endpoint[1])
+                    pg.moveTo(startX, startY)
+                    end_x, end_y = self.get_stroke_endpoint()
+                    self.draw_line(msp, (startX, startY), (end_x, end_y))
+                    # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
+                    if stroke % 10 == 0:
+                        print(stroke)
 
 
 class MSPaint:
-    def __init__(self, wait, MANUAL_COLOR=False, MANUAL_SIZE=False):
+    def __init__(self, palette, wait, MANUAL_COLOR=False, MANUAL_SIZE=False):
 
+        self.palette = palette
         self.wait = 5  # Seconds to wait
         self.swatch_top_left = (1430, 95)
         self.swatch_bottom_right = (1723, 141)
@@ -166,7 +199,7 @@ class MSPaint:
         if MANUAL_SIZE:
             self.manually_calibrate_size()
 
-        self.calculate_offset("brush-style")
+        self.calculate_offset("brush_style")
 
     def __str__(self):
         return f" MS Paint object: \n COLOR TL {self.swatch_top_left} \
@@ -191,11 +224,11 @@ class MSPaint:
                 btn_name, "Move to the upper right (Airbrush) button", "captured\n"
             )
 
-            self.calculate_offset("brush-style")
+            self.calculate_offset("brush_style")
 
     def calculate_offset(self, item_type):
 
-        if item_type == "brush-style":
+        if item_type == "brush_style":
             NUM_ROWS, NUM_COLS = 3, 4
             offsetX = (self.style_TR[0] - self.style_LL[0]) / (NUM_COLS - 1)
             offsetY = (self.style_LL[1] - self.style_TR[1]) / (NUM_ROWS - 1)
@@ -252,15 +285,18 @@ class MSPaint:
         Parameters
         ----------
         item_type : str
-            The MS Paint item. One of {'color', 'brush-style'}
+            The MS Paint item. One of {'color', 'brush_style'}
+        selected : str
+            The color or brush_style whose coords are needed
+            One of {PALETTE.keys() or BRUSH_STYLE.keys()}
         """
         if item_type == "color":
-            (btn_idx_x, btn_idx_y) = PALETTE.get(selected)
+            (btn_idx_x, btn_idx_y) = self.palette.get(selected)
             x = self.swatch_top_left[0] + (btn_idx_x - 1) * self.swatch_offset[0]
             y = self.swatch_top_left[1] + (btn_idx_y - 1) * self.swatch_offset[1]
             return (x, y)
 
-        if item_type == "brush-style":
+        if item_type == "brush_style":
             (btn_idx_y, btn_idx_x) = BRUSH_STYLES.get(selected)
             x = self.style_LL[0] + (btn_idx_x - 1) * self.brush_style_offset[0]
             y = self.style_TR[1] + (btn_idx_y - 1) * self.brush_style_offset[1]
@@ -270,18 +306,19 @@ class MSPaint:
 
         if item_type == "color":
             if selected == "":
-                color = random.choice(list(PALETTE.keys()))
+                color = random.choice(list(self.palette.keys()))
             else:
                 color = selected
-                print(color)
+                if VERBOSE:
+                    print(color)
 
             color_xy = self.get_selected_items_coords(item_type, color)
-            print(f"{color} @ {color_xy}")
+            # print(f"{color} @ {color_xy}")
             pg.moveTo(color_xy)
             time.sleep(0.5)
             pg.click(color_xy)  # select the color
 
-        if item_type == "brush-size":
+        if item_type == "brush_size":
             pg.moveTo(self.brush_size_btn)
             pg.click()
 
@@ -297,7 +334,7 @@ class MSPaint:
             if VERBOSE:
                 print(f"Size {brush_size_y}, size_position {self.brush_size_btn}")
 
-        if item_type == "brush-style":
+        if item_type == "brush_style":
             pg.moveTo(self.brush_style_btn)
             pg.click()
             time.sleep(0.8)
@@ -308,12 +345,13 @@ class MSPaint:
                 style = selected
 
             pos_xy = self.get_selected_items_coords(item_type, style)
-            print(f"{item_type} {style} @ {pos_xy}")
+            if VERBOSE:
+                print(f"{item_type} {style} @ {pos_xy}")
             pg.moveTo(pos_xy)
             time.sleep(0.8)
             pg.click(pos_xy)  # select the indiv item
 
-    def test_all_items(self, action_type="print", item_type="color"):
+    def test_all_items(self, cv, action_type="print", item_type="color"):
         """ 
         This is a debugging and re-calibrating method.
 
@@ -328,25 +366,56 @@ class MSPaint:
             coords in the terminal. 'click' will sequentially click each button in the item_type.
             'draw' will actually use the tool of interest and render it on the canvas. 
         item_type : str
-            The MS Paint item. One of {'color', 'brush-style', 'brush-size'}
+            The MS Paint item. One of {'color', 'brush_style', 'brush_size'}
         """
         if action_type == "click":
-            if item_type == "brush-style":
+            if item_type == "brush_style":
                 for k, _ in BRUSH_STYLES.items():
                     self.pick_item(item_type, selected=k)
 
             if item_type == "color":
-                for k, _ in PALETTE.items():
+                for k, _ in self.palette.items():
                     self.pick_item(item_type, selected=k)
 
-            if item_type == "brush-size":
+            if item_type == "brush_size":
                 for k, _ in BRUSH_SIZES.items():
                     self.pick_item(item_type, selected=k)
 
         elif action_type == "print":
-            pass
+            if item_type == "color":
+                for k, _ in self.palette.items():
+                    print(k, "\t", self.get_selected_items_coords("color", k))
+            if item_type == "brush_style":
+                for k, _ in BRUSH_STYLES.items():
+                    print(k, "\t", self.get_selected_items_coords("brush_style", k))
+
+            if item_type == "brush_size":
+                for k, _ in BRUSH_SIZES.items():
+                    print(
+                        k,
+                        "\t (",
+                        self.brush_size_btn[0],
+                        self.size_options[BRUSH_SIZES[k]],
+                        ")",
+                    )
+
         elif action_type == "draw":
-            pass
+            if item_type == "color":
+                for i, k in enumerate(self.palette):
+                    stx = cv.origin[0] + 10
+                    sty = cv.origin[1] + 10 * (i + 1)
+                    cv.draw_line(self, (stx, sty), (stx + 50, sty), color=k)
+            elif item_type == "brush_size":
+                for i, k in enumerate(BRUSH_SIZES):
+                    stx = cv.origin[0] + 70
+                    sty = cv.origin[1] + 10 * (i + 1)
+                    cv.draw_line(self, (stx, sty), (stx + 50, sty), brush_size=k)
+            elif item_type == "brush_style":
+                for i, k in enumerate(BRUSH_STYLES):
+                    stx = cv.origin[0] + 110
+                    sty = cv.origin[1] + 40 * (i + 1)
+                    cv.draw_line(self, (stx, sty), (stx + 50, sty), brush_style=k)
+
         else:
             return
 
@@ -357,7 +426,7 @@ class MSPaint:
 
         print(f"swatch top left {self.swatch_top_left}")
         print(f"swatch offset {self.swatch_offset}")
-        for c, ci in PALETTE.items():
+        for c, ci in ALL_COLORS.items():
             print(f"{c}, {ci}, {self.get_selected_items_coords('color', c)}")
 
     def display_all_sizes(self):
@@ -444,8 +513,8 @@ def get_coords(repeat):
 def display_menu(msp, cv, SPECIFY_NUM_TICKS):
     print("\nEnter (Type) an option and Press Enter:")
     print(
-        "1: Draw  2: Get Cursor Coords 3: Recalibrate Coords \t \
-        4: 4 corners of the Canvas"
+        "1: Draw  2: Get Cursor Coords 3: Recalibrate Coords \
+            \t 4: 4 corners of the Canvas"
     )
     print("5: Print Canvas and MSP Coords \t 6. Show Size and Brush-type Btns")
     print("7pc. Print all colors \t 7pb. Print all Brushes \t 7ps. Print all Sizes")
@@ -460,7 +529,7 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
         if SPECIFY_NUM_TICKS:
             ticks = input()
         wait_loop(WAIT_SECONDS)
-        cv.draw(msp, int(ticks))
+        cv.draw(msp, int(ticks), "full_random")
         display_menu(msp, cv, SPECIFY_NUM_TICKS=False)
 
     if result == "2":
@@ -483,16 +552,24 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
         time.sleep(0.5)
         pg.click()
         time.sleep(0.5)
-        msp.pick_item(item_type="brush-style", selected="")
+        msp.pick_item(item_type="brush_style", selected="")
 
     test_d = {
+        "7pb": ("print", "brush_style"),
+        "7pc": ("print", "color"),
+        "7ps": ("print", "brush_size"),
         "8cc": ("click", "color"),
-        "8cb": ("click", "brush-style"),
-        "8cs": ("click", "brush-size"),
+        "8cb": ("click", "brush_style"),
+        "8cs": ("click", "brush_size"),
+        "9dc": ("draw", "color"),
+        "9ds": ("draw", "brush_size"),
+        "9db": ("draw", "brush_style"),
     }
     if result in test_d:
-        wait_loop(WAIT_SECONDS)
-        msp.test_all_items(test_d[result][0], test_d[result][1])
+        action, item_type = test_d[result][0], test_d[result][1]
+        if action != "print":
+            wait_loop(WAIT_SECONDS)
+        msp.test_all_items(cv, action, item_type)
 
     if result == "x":
         sys.exit()
@@ -500,10 +577,19 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
     return cv
 
 
+def get_palette(color_list):
+    """ Returns a dictionary of Colors and btn_indices, based on the color_list provided"""
+    return dict((k, ALL_COLORS[k]) for k in color_list if k in ALL_COLORS)
+
+
 def main():
 
-    cv = Canvas(900, 504)
-    msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
+    palette = get_palette(JAMAICAN_COLORS)
+    print(palette)
+
+    cv = Canvas(900, 504, palette)
+    msp = MSPaint(palette, 5, MANUAL_COLOR=False, MANUAL_SIZE=False)
+
     # msp.pick_color("orange")
     # msp.click()
     # cv.draw_line((1200, 500), (1400, 500))
@@ -535,6 +621,9 @@ SIZE_CHANGE = True
 
 MAX_STROKE_LEN = 30
 MIN_STROKE_LEN = 5
+
+# PALETTE = ALL_COLORS
+JAMAICAN_COLORS = ["yellow", "green", "black"]
 
 
 if __name__ == "__main__":

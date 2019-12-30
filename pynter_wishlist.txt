@@ -1,32 +1,52 @@
 Pynter 0.1.0
 
-
-Add a method to DEMO all brush styles, all colors, all sizes on the Canvas
-Add a method to PRINT COORDS of all brushes, colors and sizes
-Add a method to click all brushes, colors, sizes
-
-
 Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
+Add a COuntry colors based palettes
+
+
+Regions. Is the point starting from within...
+Is the point p inside region R?
+Start and/or end at edge of Canvas
+
+**kwargs for Art Direction
 
 Add tools, shapes
 Fill Tool
 Add Eraser
+Save the Drawing
 
 Comment every single function
 Take a video recording of Pynter in action
 Add Argparse and ConfigParse
 
 Ability to Change Background
-Save the Drawing
 
 Create a gh-pages branch, and add examples
 
 
 Art Director Page/Syntax
 
+At least
+6 Parts of each stroke
+
+Start=  
+endpt= 
+color= 
+BrushSize= and 
+BrushType=
+Length=
+
+
+Start:
+   On the End
+   In a particular region of the canvas
+
+
 Modes:
    Geometric fills. (V shaped lines. Radials. )
    Blues...
+   Grid Fill
+   End to End Lines
 
 Colors: (BLUES, REDS, GREENS, YELLOWS, PASTEL, MUTED, GRAYS, B&W)
 ARCS: Long, short, medium, fixed_length, fixed angles, only a few angles
