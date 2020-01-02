@@ -2,11 +2,11 @@ Pynter 0.1.0
 
 Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
 Add a COuntry colors based palettes
+Start and/or end at edge of Canvas
 
 
 Regions. Is the point starting from within...
 Is the point p inside region R?
-Start and/or end at edge of Canvas
 
 **kwargs for Art Direction
 
