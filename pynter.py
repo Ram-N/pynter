@@ -60,7 +60,9 @@ class Canvas:
         print(f"center {self.center}")
         print(f"Canvas End {self.endpoint}")
 
-    def draw_line(self, msp, st, end, color="", brush_size="", brush_style="", palette={}):
+    def draw_line(
+        self, msp, st, end, color="", brush_size="", brush_style="", palette={}
+    ):
         """ Draws a line from startxy to endxy, with specified items.
 
         st to end, using the color/size/brush type. If any of these are 
@@ -95,35 +97,6 @@ class Canvas:
         pg.dragTo(end_x, end_y, button="left")
         return
 
-    def get_stroke_endpoint(self):
-
-        pos = pg.position()
-        startX = pos[0]
-        startY = pos[1]
-        stroke_len = random.randint(MIN_STROKE_LEN, MAX_STROKE_LEN)  # PARAMETRIZE
-
-        found = 0
-        while not found:
-            end_x = random.randint(
-                startX - int((self.width / stroke_len)),
-                startX + int((self.width / stroke_len)),
-            )
-            end_y = random.randint(
-                startY - int((self.height / stroke_len)),
-                startY + int((self.height / stroke_len)),
-            )
-            if end_x > self.endpoint[0]:
-                continue
-            elif end_x < self.origin[0]:
-                continue
-            elif end_y > self.endpoint[1]:
-                continue
-            elif end_y < self.origin[1]:
-                continue
-            else:
-                # print(f'new move coords {end_x} {end_y}')
-                return (end_x, end_y)
-
     def draw(self, msp, art_direction, num_strokes=10):
         """This is the main function where the painting happens.
 
@@ -135,19 +108,24 @@ class Canvas:
 
         """
         random_colors = False
-        
-        for k,vlist in art_direction.items():
+        continuous_flag = False
+        startX, startY = self.origin[0], self.origin[1]
 
-            if k=='NUM_STROKES':
-                num_strokes = int(art_direction['NUM_STROKES'][0])
+        for k, vlist in art_direction.items():
 
-            if k == 'PALETTE':
+            if k == "NUM_STROKES":
+                num_strokes = int(art_direction["NUM_STROKES"][0])
+
+            if k == "PALETTE":
                 palette = get_palette(vlist)
 
-            if k == 'COLORS':
+            if k == "COLORS":
                 for v in vlist:
-                    if v == 'random':
+                    if v == "random":
                         random_colors = True
+            if "continuous" in art_direction["START_POINTS"]:
+                continuous_flag = True
+                endX, endY = get_start_pt(self, art_direction, specific="random")
 
         for stroke in range(num_strokes):
 
@@ -163,10 +141,13 @@ class Canvas:
 
             # if random.randint(0,100) > 75:
             #    curve()
-            startX, startY = get_start_pt(self, art_direction, specific='random')
+            if continuous_flag:
+                startX, startY = endX, endY
+
             pg.moveTo(startX, startY)
-            end_x, end_y = self.get_stroke_endpoint()
-            self.draw_line(msp, (startX, startY), (end_x, end_y))
+            endX, endY = get_stroke_endpoint(self, art_direction, startX, startY)
+            self.draw_line(msp, (startX, startY), (endX, endY))
+
             # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
             if stroke % 10 == 0:
                 print(stroke)
@@ -343,7 +324,9 @@ class MSPaint:
             time.sleep(0.8)
             pg.click(pos_xy)  # select the indiv item
 
-    def test_all_items(self, cv, action_type="print", item_type="color", art_direction = {}):
+    def test_all_items(
+        self, cv, action_type="print", item_type="color", art_direction={}
+    ):
         """ 
         This is a debugging and re-calibrating method.
 
@@ -366,7 +349,9 @@ class MSPaint:
                     self.pick_item(item_type, selected=k)
 
             if item_type == "color":
-                palette_d = get_palette( art_direction['PALETTE'])  #arg should be a valid list of colors
+                palette_d = get_palette(
+                    art_direction["PALETTE"]
+                )  # arg should be a valid list of colors
                 for k, _ in palette_d.items():
                     self.pick_item(item_type, selected=k, palette=palette_d)
 
@@ -376,9 +361,13 @@ class MSPaint:
 
         elif action_type == "print":
             if item_type == "color":
-                palette_d = get_palette( art_direction['palette'])  #arg should be a valid list of colors
+                palette_d = get_palette(
+                    art_direction["palette"]
+                )  # arg should be a valid list of colors
                 for k, _ in palette_d.items():
-                    print(k, "\t", self.get_selected_items_coords("color", k, palette_d))
+                    print(
+                        k, "\t", self.get_selected_items_coords("color", k, palette_d)
+                    )
             if item_type == "brush_style":
                 for k, _ in BRUSH_STYLES.items():
                     print(k, "\t", self.get_selected_items_coords("brush_style", k))
@@ -395,12 +384,16 @@ class MSPaint:
 
         elif action_type == "draw":
             if item_type == "color":
-                palette_d = get_palette( art_direction['palette'])  #arg should be a valid list of colors
+                palette_d = get_palette(
+                    art_direction["palette"]
+                )  # arg should be a valid list of colors
 
                 for i, k in enumerate(palette_d):
                     stx = cv.origin[0] + 10
                     sty = cv.origin[1] + 10 * (i + 1)
-                    cv.draw_line(self, (stx, sty), (stx + 50, sty), color=k, palette=palette_d)
+                    cv.draw_line(
+                        self, (stx, sty), (stx + 50, sty), color=k, palette=palette_d
+                    )
             elif item_type == "brush_size":
                 for i, k in enumerate(BRUSH_SIZES):
                     stx = cv.origin[0] + 70
@@ -508,7 +501,6 @@ def get_coords(repeat):
 
 def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
 
-
     print("\nEnter (Type) an option and Press Enter:")
     print(
         "1: Draw  2: Get Cursor Coords 3: Recalibrate Coords \
@@ -578,22 +570,26 @@ def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
 def main():
 
     config = configparser.ConfigParser()
-    config.read('art_direction.cfg')
+    config.read("art_direction.cfg")
 
-    art_direction = {'line-length': 'end-to-end',
-    'everything': 'all-random',
-    'colors': 'random',
-    'palette': BLACK_WHITE}
+    art_direction = {
+        "line-length": "end-to-end",
+        "everything": "all-random",
+        "colors": "random",
+        "palette": BLACK_WHITE,
+    }
 
     art_direction = as_dict(config)
 
     for section in config.sections():
         for key in config[section]:
             _list = config[section][key]
-            DIRS = [e.strip() for e in _list.split(',')]
-            art_direction[section] = DIRS
+            DIRS = [e.strip() for e in _list.split(",")]
+            if len(config[section]) > 1:
+                art_direction[section][key] = DIRS #nested
+            else:
+                art_direction[section] = DIRS
 
-    print(art_direction)
 
     cv = Canvas(900, 504)
     msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
@@ -604,9 +600,11 @@ def main():
     # cv.manually_calibrate_canvas()
     msp.display_all_sizes()
     # msp.manually_calibrate("Brushes")
+    print(art_direction)
 
-    print(cv)
-    print(msp)
+    if VERBOSE:
+        print(cv)
+        print(msp)
     # cv = recaliberate(cv, CANVAS_VARIABLE=False)
     while True:
         cv = display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS=False)

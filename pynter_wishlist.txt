@@ -17,7 +17,7 @@ Save the Drawing
 
 Comment every single function
 Take a video recording of Pynter in action
-Add Argparse and ConfigParse
+Add Argparse
 
 Ability to Change Background
 
