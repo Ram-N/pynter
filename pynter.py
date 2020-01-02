@@ -1,9 +1,13 @@
+import configparser
+import json
+import math
 import random
 import time
-import math
 import sys
 
 import pyautogui as pg
+
+from utils import *
 
 
 """
@@ -11,28 +15,6 @@ Ram Narasimhan
 Pynter is derived from: Doodlrr by Eric Hamilton erickenneth91@gmail.com
 """
 
-ALL_COLORS = {
-    "black": (1, 1),
-    "gray50": (2, 1),
-    "darkred": (3, 1),
-    "red": (4, 1),
-    "orange": (5, 1),
-    "yellow": (6, 1),
-    "green": (7, 1),
-    "turquoise": (8, 1),
-    "blue": (9, 1),
-    "purple": (10, 1),
-    "white": (1, 2),
-    "gray25": (2, 2),
-    "brown": (3, 2),
-    "rose": (4, 2),
-    "gold": (5, 2),
-    "light-yellow": (6, 2),
-    "lime": (7, 2),
-    "light turquoise": (8, 2),
-    "blue-gray": (9, 2),
-    "lavender": (10, 2),
-}
 
 BRUSH_STYLES = {
     "brush": (1, 1),
@@ -152,35 +134,42 @@ class Canvas:
             None. Just defailts to rendering the menu
 
         """
-        for k,v in art_direction.items():
+        random_colors = False
+        
+        for k,vlist in art_direction.items():
 
-            if k == 'palette':
-                palette = get_palette(v)
+            if k=='NUM_STROKES':
+                num_strokes = int(art_direction['NUM_STROKES'][0])
 
-            if k == 'colors':
-                if v == 'random':
-                    if random.randint(0, 100) > COLOR_CHANGE_THRESHOLD:
-                        msp.pick_item(item_type="color", selected="", palette=palette)
+            if k == 'PALETTE':
+                palette = get_palette(vlist)
 
-            if v == "all-random":
-                for stroke in range(num_strokes):
+            if k == 'COLORS':
+                for v in vlist:
+                    if v == 'random':
+                        random_colors = True
 
-                    if random.randint(0, 100) > SIZE_CHANGE_THRESHOLD:
-                        msp.pick_item(item_type="brush_size", selected="")
+        for stroke in range(num_strokes):
 
-                    if random.randint(0, 100) > STYLE_CHANGE_THRESHOLD:
-                        msp.pick_item(item_type="brush_style", selected="")
+            if random_colors:
+                if random.randint(0, 100) > COLOR_CHANGE_THRESHOLD:
+                    msp.pick_item(item_type="color", selected="", palette=palette)
 
-                    # if random.randint(0,100) > 75:
-                    #    curve()
-                    startX = random.randint(self.origin[0], self.endpoint[0])
-                    startY = random.randint(self.origin[1], self.endpoint[1])
-                    pg.moveTo(startX, startY)
-                    end_x, end_y = self.get_stroke_endpoint()
-                    self.draw_line(msp, (startX, startY), (end_x, end_y))
-                    # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
-                    if stroke % 10 == 0:
-                        print(stroke)
+            if random.randint(0, 100) > SIZE_CHANGE_THRESHOLD:
+                msp.pick_item(item_type="brush_size", selected="")
+
+            if random.randint(0, 100) > STYLE_CHANGE_THRESHOLD:
+                msp.pick_item(item_type="brush_style", selected="")
+
+            # if random.randint(0,100) > 75:
+            #    curve()
+            startX, startY = get_start_pt(self, art_direction, specific='random')
+            pg.moveTo(startX, startY)
+            end_x, end_y = self.get_stroke_endpoint()
+            self.draw_line(msp, (startX, startY), (end_x, end_y))
+            # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
+            if stroke % 10 == 0:
+                print(stroke)
 
 
 class MSPaint:
@@ -377,7 +366,7 @@ class MSPaint:
                     self.pick_item(item_type, selected=k)
 
             if item_type == "color":
-                palette_d = get_palette( art_direction['palette'])  #arg should be a valid list of colors
+                palette_d = get_palette( art_direction['PALETTE'])  #arg should be a valid list of colors
                 for k, _ in palette_d.items():
                     self.pick_item(item_type, selected=k, palette=palette_d)
 
@@ -517,13 +506,7 @@ def get_coords(repeat):
         time.sleep(1)
 
 
-def display_menu(msp, cv, SPECIFY_NUM_TICKS):
-
-
-    art_direction = {'line-length': 'end-to-end',
-    'everything': 'all-random',
-    'colors': 'random',
-    'palette': BLACK_WHITE}
+def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
 
 
     print("\nEnter (Type) an option and Press Enter:")
@@ -545,7 +528,7 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
             ticks = input()
         wait_loop(WAIT_SECONDS)
         cv.draw(msp, art_direction, int(ticks))
-        display_menu(msp, cv, SPECIFY_NUM_TICKS=False)
+        display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS=False)
 
     if result == "2":
         print("For how long? (secs)")
@@ -592,15 +575,25 @@ def display_menu(msp, cv, SPECIFY_NUM_TICKS):
     return cv
 
 
-def get_palette(color_list):
-    """ Returns a dictionary of Colors and btn_indices, based on the color_list provided"""
-    return dict((k, ALL_COLORS[k]) for k in color_list if k in ALL_COLORS)
-
-
 def main():
 
-    palette = get_palette(BLACK_WHITE)
-    print(palette)
+    config = configparser.ConfigParser()
+    config.read('art_direction.cfg')
+
+    art_direction = {'line-length': 'end-to-end',
+    'everything': 'all-random',
+    'colors': 'random',
+    'palette': BLACK_WHITE}
+
+    art_direction = as_dict(config)
+
+    for section in config.sections():
+        for key in config[section]:
+            _list = config[section][key]
+            DIRS = [e.strip() for e in _list.split(',')]
+            art_direction[section] = DIRS
+
+    print(art_direction)
 
     cv = Canvas(900, 504)
     msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
@@ -616,11 +609,11 @@ def main():
     print(msp)
     # cv = recaliberate(cv, CANVAS_VARIABLE=False)
     while True:
-        cv = display_menu(msp, cv, SPECIFY_NUM_TICKS=False)
+        cv = display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS=False)
 
 
 # These should all eventually come either from cfg file or cmdline args
-VERBOSE = True
+VERBOSE = False
 SPECIFY_NUM_TICKS = False
 NUM_TICKS = 100
 NUM_COLOR_BUTTONS = (10, 2)
