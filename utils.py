@@ -1,6 +1,7 @@
 # utility functions
 import math
 import random
+import sys
 
 
 ALL_COLORS = {
@@ -27,6 +28,16 @@ ALL_COLORS = {
 }
 
 
+def is_invalid(art_direction, cv):
+    """CHeck if the art directions are implementable."""
+    llen = art_direction["LINE_LENGTH"]["line_length"]
+    if llen[0].isnumeric():
+        if int(llen[0]) > cv.width:
+            print("Very high LINE LENGTH")
+            return True
+    return False
+
+
 def get_palette(color_list):
     """ Returns a dictionary of Colors and btn_indices, based on the color_list provided"""
     return dict((k, ALL_COLORS[k]) for k in color_list if k in ALL_COLORS)
@@ -38,6 +49,15 @@ def get_start_pt(cv, art_direction, specific=""):
         startX = random.randint(cv.origin[0], cv.endpoint[0])
         startY = random.randint(cv.origin[1], cv.endpoint[1])
         return startX, startY
+
+
+def is_pt_outside_canvas(cv, x, y):
+    """ Returns 0 if pt is inside the canvas boundaries else returns 1 """
+
+    if x > cv.origin[0] and (x < cv.endpoint[0]):
+        if y > cv.origin[1] and (y < cv.endpoint[1]):
+            return 0  # everything is okay
+    return 1
 
 
 def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
@@ -52,40 +72,65 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
         Angle & length if specified will be used
     """
     safety = 0
-    found = 0
+    foundx, foundy = 0, 0
+
+    if is_pt_outside_canvas(cv, startX, startY):
+        print(f"Error. Starting point is outside the canvas {startX} {startY}")
+        print(cv)
+        sys.exit(1)
 
     llen = art_direction["LINE_LENGTH"]["line_length"]
-    while not found:
+    angles = art_direction["LINE_LENGTH"]["angles"]
+
+    while not (foundx and foundy):
         safety += 1
-        if safety > 100:
-            found = 1
+        if safety > 50:
             print("unable to find endx, endy")
-            break
+            print(f"{startX} {startY} Angles {angles} Len {llen}")
+            print(f"theta {math.cos(theta)} stroke {stroke_len}")
+            print(f"theta {math.sin(theta)} stroke {stroke_len}")
+            print(cv)
+
+        if safety > 100:
+            return cv.center  # give up and start from center
 
         if "random" in llen:
             stroke_len_x = random.randint(0, cv.width)
             stroke_len_y = random.randint(0, cv.height)
-            end_x = random.choice([startX - stroke_len_x, startX + stroke_len_x])
-            end_y = random.choice([startY - stroke_len_y, startY + stroke_len_y])
+            if not foundx:
+                end_x = random.choice([startX - stroke_len_x, startX + stroke_len_x])
+            if not foundy:
+                end_y = random.choice([startY - stroke_len_y, startY + stroke_len_y])
 
-        if llen[0].isnumeric():
-            stroke_len = int(llen[0])
+        if "random" in angles:
             theta = math.radians(
                 random.randint(-180, 180)
             )  # in radians, converted from degrees
-            end_x = startX + int(stroke_len * math.cos(theta))
-            end_y = startY + int(stroke_len * math.sin(theta))
-        if end_x > cv.endpoint[0]:
-            continue
-        elif end_x < cv.origin[0]:
-            continue
-        elif end_y > cv.endpoint[1]:
-            continue
-        elif end_y < cv.origin[1]:
-            continue
         else:
-            found = 1
+            theta = math.radians(int(random.choice(angles)))
 
+        if llen[0].isnumeric():
+            stroke_len = int(llen[0])
+            if not foundx:
+                DIRX = random.choice([1, -1])
+                end_x = startX + (int(stroke_len * math.cos(theta)) * DIRX)
+            if not foundy:
+                DIRY = random.choice([1, -1])
+                end_y = startY + (int(stroke_len * math.sin(theta)) * DIRY)
+            # minus_x = startX - int(stroke_len * math.cos(theta))
+            # minus_y = startY - int(stroke_len * math.sin(theta))
+
+        if not foundx:
+            if (end_x < cv.endpoint[0]) and (end_x > cv.origin[0]):
+                foundx = True
+
+        if not foundy:
+            if (end_y < cv.endpoint[1]) and (end_y > cv.origin[1]):
+                foundy = True
+
+    print(
+        f"st {startX} {startY} {end_x} {end_y} cv {cv.origin} {cv.endpoint} foundx {foundx} foundy {foundy} {safety}"
+    )
     return (end_x, end_y)
 
 

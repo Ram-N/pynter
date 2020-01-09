@@ -1,5 +1,8 @@
 Pynter 0.1.0
 
+
+Implement specific brush, specific size...
+
 Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
 Add a COuntry colors based palettes
 Start and/or end at edge of Canvas

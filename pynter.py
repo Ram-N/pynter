@@ -119,7 +119,7 @@ class Canvas:
             if k == "PALETTE":
                 palette = get_palette(vlist)
 
-            if k == "COLORS":
+            if k == "COLOR_SEQUENCE":
                 for v in vlist:
                     if v == "random":
                         random_colors = True
@@ -362,7 +362,7 @@ class MSPaint:
         elif action_type == "print":
             if item_type == "color":
                 palette_d = get_palette(
-                    art_direction["palette"]
+                    art_direction["PALETTE"]
                 )  # arg should be a valid list of colors
                 for k, _ in palette_d.items():
                     print(
@@ -385,7 +385,7 @@ class MSPaint:
         elif action_type == "draw":
             if item_type == "color":
                 palette_d = get_palette(
-                    art_direction["palette"]
+                    art_direction["PALETTE"]
                 )  # arg should be a valid list of colors
 
                 for i, k in enumerate(palette_d):
@@ -590,9 +590,12 @@ def main():
             else:
                 art_direction[section] = DIRS
 
-
     cv = Canvas(900, 504)
     msp = MSPaint(5, MANUAL_COLOR=False, MANUAL_SIZE=False)
+
+    if is_invalid(art_direction, cv):
+        print('Invalid directions \n Please fix and rerun')
+        sys.exit(1)
 
     # msp.pick_color("orange")
     # msp.click()
@@ -600,6 +603,7 @@ def main():
     # cv.manually_calibrate_canvas()
     msp.display_all_sizes()
     # msp.manually_calibrate("Brushes")
+    print('Art Direction')
     print(art_direction)
 
     if VERBOSE:
