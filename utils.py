@@ -2,6 +2,12 @@
 import math
 import random
 import sys
+import time
+
+import pyautogui as pg
+
+WAIT_SECONDS = 5
+
 
 
 ALL_COLORS = {
@@ -28,6 +34,36 @@ ALL_COLORS = {
 }
 
 
+def wait_loop(wait_time):
+    print("Press Enter to start countdown")
+    input()
+    count = wait_time
+    while count > 0:
+        print(str(count) + "...", end=" ", flush=True)
+        time.sleep(1)
+        count -= 1
+    print()
+
+def capture_coords(btn, pretext="", posttext=""):
+    """ Generic function to return location of a single item in MSP """
+    print(pretext)
+    wait_loop(WAIT_SECONDS)
+    print(posttext)
+    return pg.position()
+
+def get_4_points(wait_time=5):
+
+    for _ in range(4):
+        wait_loop(wait_time)
+        print(pg.position())
+
+def get_coords(repeat):
+    for _ in range(repeat):
+        print(pg.position())
+        time.sleep(1)
+
+
+
 def is_invalid(art_direction, cv):
     """CHeck if the art directions are implementable."""
     llen = art_direction["LINE_LENGTH"]["line_length"]
@@ -38,8 +74,10 @@ def is_invalid(art_direction, cv):
     return False
 
 
-def get_palette(color_list):
+def get_color_index_dict(color_list):
     """ Returns a dictionary of Colors and btn_indices, based on the color_list provided"""
+    print(color_list)
+    print([(k in ALL_COLORS) for k in color_list])
     return dict((k, ALL_COLORS[k]) for k in color_list if k in ALL_COLORS)
 
 
@@ -48,6 +86,7 @@ def get_start_pt(cv, art_direction, specific=""):
     if specific == "random":
         startX = random.randint(cv.origin[0], cv.endpoint[0])
         startY = random.randint(cv.origin[1], cv.endpoint[1])
+        print(f'starting at {startX} {startY}')
         return startX, startY
 
 
@@ -66,7 +105,7 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
         if StartX and startY are specified, they will be used
         Length plays an important role. It should be specified inside art_direction
         Length can be completely 'random' or,
-        Length can be {'Long', 'Med|ium' or 'short} or an exact number of pixels or,
+        Length can be {'Long', 'Med|ium' or 'short} or,
         Length can be an exact number of pixels or,
         Length can be a range (between (min, max)).
         Angle & length if specified will be used
@@ -84,12 +123,6 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
 
     while not (foundx and foundy):
         safety += 1
-        if safety > 50:
-            print("unable to find endx, endy")
-            print(f"{startX} {startY} Angles {angles} Len {llen}")
-            print(f"theta {math.cos(theta)} stroke {stroke_len}")
-            print(f"theta {math.sin(theta)} stroke {stroke_len}")
-            print(cv)
 
         if safety > 100:
             return cv.center  # give up and start from center
@@ -127,6 +160,14 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
         if not foundy:
             if (end_y < cv.endpoint[1]) and (end_y > cv.origin[1]):
                 foundy = True
+
+        if safety > 50:
+            print("unable to find endx, endy")
+            print(f"{startX} {startY} Angles {angles} Len {llen}")
+            print(f"theta {math.cos(theta)} stroke {stroke_len}")
+            print(f"theta {math.sin(theta)} stroke {stroke_len}")
+            print(cv)
+
 
     print(
         f"st {startX} {startY} {end_x} {end_y} cv {cv.origin} {cv.endpoint} foundx {foundx} foundy {foundy} {safety}"

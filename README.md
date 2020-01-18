@@ -24,6 +24,13 @@ Pynter is inspired by (and derived from) this [reddit post](https://www.reddit.c
 ### Works only on MS Windows
 I've only tried it on Windows 10. Also, this is calibrated for MS Paint program. (Might be difficult in Mac OS or Linux.)
 
+**Menu**
+1b: The b is undocumented, but a very useful feature. It will draw the 4 border lines of the canvas. Useful as a debugging tool 
+before any real drawing commences.
+
+
+
+
 **Some Observations**
 - The type of Brush style that you choose makes a big difference
 - In order to speed things up, I choose a fixed Canvas size and don't move the MS Paint window. This means I only have to calibrate once, and can reuse the coordinates.

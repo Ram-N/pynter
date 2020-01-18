@@ -1,6 +1,7 @@
 Pynter 0.1.0
 
 
+Kill the Airbrush for now.
 Implement specific brush, specific size...
 
 Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
@@ -59,5 +60,8 @@ EndX: Angles, straight 90-180
 Starburst, Fireworks, 
 Limited Brushes, not all
 
-Underline with a black/gray shadow. (This should be fun to try
-Each stroke also gets an random black/gray25/gray50 underline, with a small offset)
+Underline with a black/gray shadow. (This should be fun to try)
+Each stroke also gets an random black/gray25/gray50 underline, with a small y-offset
+
+
+

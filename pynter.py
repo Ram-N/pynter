@@ -2,12 +2,12 @@ import configparser
 import json
 import math
 import random
-import time
 import sys
 
 import pyautogui as pg
 
 from utils import *
+from draw import *
 
 
 """
@@ -61,7 +61,7 @@ class Canvas:
         print(f"Canvas End {self.endpoint}")
 
     def draw_line(
-        self, msp, st, end, color="", brush_size="", brush_style="", palette={}
+        self, msp, st, end, color="", brush_size="", brush_style="", color_index={}
     ):
         """ Draws a line from startxy to endxy, with specified items.
 
@@ -84,7 +84,7 @@ class Canvas:
         """
 
         if color != "":
-            msp.pick_item("color", selected=color, palette=palette)
+            msp.pick_item("color", selected=color, palette=color_index)
         if brush_size != "":
             msp.pick_item("brush_size", selected=brush_size)
         if brush_style != "":
@@ -104,7 +104,7 @@ class Canvas:
             num_strokes: Number of brushstrokes to make
 
         Returns:
-            None. Just defailts to rendering the menu
+            None. Just defaults to rendering the menu
 
         """
         random_colors = False
@@ -117,15 +117,16 @@ class Canvas:
                 num_strokes = int(art_direction["NUM_STROKES"][0])
 
             if k == "PALETTE":
-                palette = get_palette(vlist)
+                palette = get_color_index_dict(vlist)
 
             if k == "COLOR_SEQUENCE":
                 for v in vlist:
                     if v == "random":
                         random_colors = True
-            if "continuous" in art_direction["START_POINTS"]:
-                continuous_flag = True
-                endX, endY = get_start_pt(self, art_direction, specific="random")
+
+        if "continuous" in art_direction["START_POINTS"]:
+            continuous_flag = True
+            endX, endY = get_start_pt(self, art_direction, specific="random")
 
         for stroke in range(num_strokes):
 
@@ -149,8 +150,8 @@ class Canvas:
             self.draw_line(msp, (startX, startY), (endX, endY))
 
             # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
-            if stroke % 10 == 0:
-                print(stroke)
+            if stroke % 1 == 0:
+                print(f'stroke {stroke} {startX} {startY} {endX} {endY}')
 
 
 class MSPaint:
@@ -282,8 +283,12 @@ class MSPaint:
                 color = random.choice(list(palette.keys()))
             else:
                 color = selected
+                palette = get_color_index_dict([color])
+                print(color)
                 if VERBOSE:
                     print(color)
+
+            print(palette)
 
             color_xy = self.get_selected_items_coords(item_type, color, palette=palette)
             # print(f"{color} @ {color_xy}")
@@ -349,7 +354,7 @@ class MSPaint:
                     self.pick_item(item_type, selected=k)
 
             if item_type == "color":
-                palette_d = get_palette(
+                palette_d = get_color_index_dict(
                     art_direction["PALETTE"]
                 )  # arg should be a valid list of colors
                 for k, _ in palette_d.items():
@@ -361,7 +366,7 @@ class MSPaint:
 
         elif action_type == "print":
             if item_type == "color":
-                palette_d = get_palette(
+                palette_d = get_color_index_dict(
                     art_direction["PALETTE"]
                 )  # arg should be a valid list of colors
                 for k, _ in palette_d.items():
@@ -384,7 +389,7 @@ class MSPaint:
 
         elif action_type == "draw":
             if item_type == "color":
-                palette_d = get_palette(
+                palette_d = get_color_index_dict(
                     art_direction["PALETTE"]
                 )  # arg should be a valid list of colors
 
@@ -423,24 +428,6 @@ class MSPaint:
         print(f"size_Button is @ {self.brush_size_btn}")
 
 
-def wait_loop(wait_time):
-    print("Press Enter to start countdown")
-    input()
-    count = wait_time
-    while count > 0:
-        print(str(count) + "...", end=" ", flush=True)
-        time.sleep(1)
-        count -= 1
-    print()
-
-
-def capture_coords(btn, pretext="", posttext=""):
-    """ Generic function to return location of a single item in MSP """
-    print(pretext)
-    wait_loop(WAIT_SECONDS)
-    print(posttext)
-    return pg.position()
-
 
 def curve(cv):
     startX = random.randint(cv.origin[0], cv.origin[2])
@@ -460,13 +447,6 @@ def curve(cv):
             newX = currX - 1
         newY = cv.center[1] + math.tan(newX)  # *(random.randint(2, height/2))
         pg.dragTo(newX, newY)
-
-
-def get_4_points(wait_time=5):
-
-    for _ in range(4):
-        wait_loop(wait_time)
-        print(pg.position())
 
 
 def recaliberate(cv, CANVAS_VARIABLE=False):
@@ -492,33 +472,28 @@ def recaliberate(cv, CANVAS_VARIABLE=False):
 
     return cv
 
-
-def get_coords(repeat):
-    for x in range(repeat):
-        print(pg.position())
-        time.sleep(1)
-
-
 def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
 
     print("\nEnter (Type) an option and Press Enter:")
     print(
-        "1: Draw  2: Get Cursor Coords 3: Recalibrate Coords \
+        "1: Draw (b)orders 2: Get Cursor Coords 3: Recalibrate Coords \
             \t 4: 4 corners of the Canvas"
     )
     print("5: Print Canvas and MSP Coords \t 6. Show Size and Brush-type Btns")
     print("7pc. Print all colors \t 7pb. Print all Brushes \t 7ps. Print all Sizes")
     print("8cc. Click all colors \t 8cb. Click all Brushes \t 8cs. Click all Sizes")
-    print("9dc. Draw all colors \t 9db. Draw all Brushes \t 9ds. Draw all Sizes")
+    print("9dc. Draw all colors \t 9db. Draw all Brushes \t\t 9ds. Draw all Sizes")
 
     result = input()
 
-    if result == "1":
+    if "1" in result:
         print("Press ctrl alt del to abort")
         ticks = 100
         if SPECIFY_NUM_TICKS:
             ticks = input()
         wait_loop(WAIT_SECONDS)
+        if 'b' in result:
+            draw_borders(msp, cv)
         cv.draw(msp, art_direction, int(ticks))
         display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS=False)
 
@@ -529,7 +504,9 @@ def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
     if result == "3":
         cv = recaliberate(cv, CANVAS_VARIABLE=False)
     if result == "4":
-        get_4_points(5)
+        wait_loop(WAIT_SECONDS)
+        draw_borders(msp, cv)
+        #get_4_points(5)
     if result == "5":
         print(cv)
         print(msp)
@@ -610,6 +587,8 @@ def main():
         print(cv)
         print(msp)
     # cv = recaliberate(cv, CANVAS_VARIABLE=False)
+
+
     while True:
         cv = display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS=False)
 
@@ -620,7 +599,6 @@ SPECIFY_NUM_TICKS = False
 NUM_TICKS = 100
 NUM_COLOR_BUTTONS = (10, 2)
 NUM_BRUSH_SIZES = 4
-WAIT_SECONDS = 5
 COLOR_CHANGE_THRESHOLD = 95
 SIZE_CHANGE_THRESHOLD = 95
 BRUSH_CHANGE_THRESHOLD = 90
