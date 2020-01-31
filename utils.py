@@ -3,12 +3,11 @@ import math
 import random
 import sys
 import time
-
 import pyautogui as pg
 
+
 WAIT_SECONDS = 5
-
-
+VERBOSE = False
 
 ALL_COLORS = {
     "black": (1, 1),
@@ -34,6 +33,21 @@ ALL_COLORS = {
 }
 
 
+BRUSH_STYLES = {
+    "brush": (1, 1),
+    "callig brush1": (1, 2),
+    "callig brush2": (1, 3),
+    #    "Airbrush": (1, 4),
+    #    "oil": (2, 1),
+    "crayon": (2, 2),
+    "marker": (2, 3),
+    "pencil": (2, 4),
+    "watercolor": (3, 1),
+}
+
+BRUSH_SIZES = {"8px": 0, "16px": 1, "30px": 2, "40px": 3}
+
+
 def wait_loop(wait_time):
     print("Press Enter to start countdown")
     input()
@@ -44,6 +58,7 @@ def wait_loop(wait_time):
         count -= 1
     print()
 
+
 def capture_coords(btn, pretext="", posttext=""):
     """ Generic function to return location of a single item in MSP """
     print(pretext)
@@ -51,17 +66,18 @@ def capture_coords(btn, pretext="", posttext=""):
     print(posttext)
     return pg.position()
 
+
 def get_4_points(wait_time=5):
 
     for _ in range(4):
         wait_loop(wait_time)
         print(pg.position())
 
+
 def get_coords(repeat):
     for _ in range(repeat):
         print(pg.position())
         time.sleep(1)
-
 
 
 def is_invalid(art_direction, cv):
@@ -74,6 +90,14 @@ def is_invalid(art_direction, cv):
     return False
 
 
+def get_active_brushes(art_direction):
+
+    active_brushes = {}
+    for v in art_direction["BRUSHES"].values():
+        active_brushes[v[0]] = BRUSH_STYLES[v[0]]
+    return active_brushes
+
+
 def get_color_index_dict(color_list):
     """ Returns a dictionary of Colors and btn_indices, based on the color_list provided"""
     print(color_list)
@@ -81,98 +105,13 @@ def get_color_index_dict(color_list):
     return dict((k, ALL_COLORS[k]) for k in color_list if k in ALL_COLORS)
 
 
-def get_start_pt(cv, art_direction, specific=""):
-    """Return X Y coords per art_direction directives specified"""
-    if specific == "random":
-        startX = random.randint(cv.origin[0], cv.endpoint[0])
-        startY = random.randint(cv.origin[1], cv.endpoint[1])
-        print(f'starting at {startX} {startY}')
-        return startX, startY
-
-
 def is_pt_outside_canvas(cv, x, y):
     """ Returns 0 if pt is inside the canvas boundaries else returns 1 """
 
-    if x > cv.origin[0] and (x < cv.endpoint[0]):
-        if y > cv.origin[1] and (y < cv.endpoint[1]):
+    if x >= cv.origin[0] and (x <= cv.endpoint[0]):
+        if y >= cv.origin[1] and (y <= cv.endpoint[1]):
             return 0  # everything is okay
     return 1
-
-
-def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
-    """ Returns endX and endY points per directives
-
-        if StartX and startY are specified, they will be used
-        Length plays an important role. It should be specified inside art_direction
-        Length can be completely 'random' or,
-        Length can be {'Long', 'Med|ium' or 'short} or,
-        Length can be an exact number of pixels or,
-        Length can be a range (between (min, max)).
-        Angle & length if specified will be used
-    """
-    safety = 0
-    foundx, foundy = 0, 0
-
-    if is_pt_outside_canvas(cv, startX, startY):
-        print(f"Error. Starting point is outside the canvas {startX} {startY}")
-        print(cv)
-        sys.exit(1)
-
-    llen = art_direction["LINE_LENGTH"]["line_length"]
-    angles = art_direction["LINE_LENGTH"]["angles"]
-
-    while not (foundx and foundy):
-        safety += 1
-
-        if safety > 100:
-            return cv.center  # give up and start from center
-
-        if "random" in llen:
-            stroke_len_x = random.randint(0, cv.width)
-            stroke_len_y = random.randint(0, cv.height)
-            if not foundx:
-                end_x = random.choice([startX - stroke_len_x, startX + stroke_len_x])
-            if not foundy:
-                end_y = random.choice([startY - stroke_len_y, startY + stroke_len_y])
-
-        if "random" in angles:
-            theta = math.radians(
-                random.randint(-180, 180)
-            )  # in radians, converted from degrees
-        else:
-            theta = math.radians(int(random.choice(angles)))
-
-        if llen[0].isnumeric():
-            stroke_len = int(llen[0])
-            if not foundx:
-                DIRX = random.choice([1, -1])
-                end_x = startX + (int(stroke_len * math.cos(theta)) * DIRX)
-            if not foundy:
-                DIRY = random.choice([1, -1])
-                end_y = startY + (int(stroke_len * math.sin(theta)) * DIRY)
-            # minus_x = startX - int(stroke_len * math.cos(theta))
-            # minus_y = startY - int(stroke_len * math.sin(theta))
-
-        if not foundx:
-            if (end_x < cv.endpoint[0]) and (end_x > cv.origin[0]):
-                foundx = True
-
-        if not foundy:
-            if (end_y < cv.endpoint[1]) and (end_y > cv.origin[1]):
-                foundy = True
-
-        if safety > 50:
-            print("unable to find endx, endy")
-            print(f"{startX} {startY} Angles {angles} Len {llen}")
-            print(f"theta {math.cos(theta)} stroke {stroke_len}")
-            print(f"theta {math.sin(theta)} stroke {stroke_len}")
-            print(cv)
-
-
-    print(
-        f"st {startX} {startY} {end_x} {end_y} cv {cv.origin} {cv.endpoint} foundx {foundx} foundy {foundy} {safety}"
-    )
-    return (end_x, end_y)
 
 
 def as_dict(config):

@@ -1,12 +1,16 @@
 Pynter 0.1.0
 
-
-Kill the Airbrush for now.
+In Art Direction, similar to PALETTE, implement Brushes to choose
 Implement specific brush, specific size...
 
-Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
-Add a COuntry colors based palettes
+Implement end-to-end
+
 Start and/or end at edge of Canvas
+border-to-border
+Top down only...(spotlight?)
+
+Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
+Add COuntry colors based palettes
 
 
 Regions. Is the point starting from within...
@@ -35,14 +39,13 @@ At least
 
 Start=  
 endpt= 
+Length=
 color= 
 BrushSize= and 
 BrushType=
-Length=
-
 
 Start:
-   On the End
+   On the Prev End
    In a particular region of the canvas
 
 
@@ -51,6 +54,9 @@ Modes:
    Blues...
    Grid Fill
    End to End Lines
+   Birder to Border lines
+   Reflective... from Center Line, Middle Line etc
+   
 
 Colors: (BLUES, REDS, GREENS, YELLOWS, PASTEL, MUTED, GRAYS, B&W)
 ARCS: Long, short, medium, fixed_length, fixed angles, only a few angles
