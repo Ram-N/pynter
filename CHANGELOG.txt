@@ -1,0 +1,11 @@
+CHANGELOG
+
+
+2/1/20
+** Implemented SIZES in Config File. Comment/uncomment to use any brush
+** Implemented Thresholds in config File
+** Implemented a check. If only one color/brush/size, then no need to change that entity
+
+1/30/20
+
+** Brush style change implemented via config file

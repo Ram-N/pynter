@@ -92,41 +92,69 @@ class Canvas:
             None. Just defaults to rendering the menu
 
         """
-        random_colors = False
+        color_change = False
         continuous_flag = False
+        size_change = True
+        brush_change = True
 
         for k, vlist in art_direction.items():
 
             if k == "NUM_STROKES":
                 num_strokes = int(art_direction["NUM_STROKES"][0])
 
-            if k == "PALETTE":
-                palette = get_color_index_dict(vlist)
-
             if k == "COLOR_SEQUENCE":
                 for v in vlist:
                     if v == "random":
-                        random_colors = True
+                        color_change = True
+
+            if k == "PALETTE":
+                palette = get_color_index_dict(vlist)
+                if len(vlist) == 1:
+                    color_change = False
+
+            if k == 'BRUSHES':
+                if len(vlist) == 1:
+                    brush_change = False
+
+            if k == 'BRUSH-SIZES':
+                if len(vlist) == 1:
+                    size_change = False
+
 
         if "continuous" in art_direction["START_POINTS"]:
             continuous_flag = True
             endX, endY = get_start_pt(self, art_direction, specific="random")
 
         active_brushes = get_active_brushes(art_direction)
+        active_sizes = get_active_sizes(art_direction)
+        thresholds = get_thresholds(art_direction)
+
+        print(f'Active Sizes {active_sizes}')
+        print(f'thresholds {thresholds}')
+        print(f'color_change={color_change} size change {size_change}, brush change {brush_change}')
+
+        #initialize Color, Size and Brush
+        msp.pick_item(item_type="color", selected="", palette=palette)
+        msp.pick_item(item_type="brush_size", selected="", sizes=active_sizes)
+        msp.pick_item(
+            item_type="brush_style", selected="", brushes=active_brushes
+        )
 
         for stroke in range(num_strokes):
 
-            if random_colors:
-                if random.randint(0, 100) > COLOR_CHANGE_THRESHOLD:
+            if color_change and ('color_change' in thresholds):
+                if random.randint(0, 100) > thresholds['color_change']:
                     msp.pick_item(item_type="color", selected="", palette=palette)
 
-            if random.randint(0, 100) > SIZE_CHANGE_THRESHOLD:
-                msp.pick_item(item_type="brush_size", selected="")
+            if size_change and ('size_change' in thresholds):
+                if random.randint(0, 100) > thresholds['size_change']:
+                    msp.pick_item(item_type="brush_size", selected="", sizes=active_sizes)
 
-            if random.randint(0, 100) > STYLE_CHANGE_THRESHOLD:
-                msp.pick_item(
-                    item_type="brush_style", selected="", brushes=active_brushes
-                )
+            if brush_change and ('brush_change' in thresholds):
+                if random.randint(0, 100) > thresholds['brush_change']:
+                    msp.pick_item(
+                        item_type="brush_style", selected="", brushes=active_brushes
+                    )
 
             # if random.randint(0,100) > 75:
             #    curve()
@@ -140,7 +168,7 @@ class Canvas:
             self.draw_line(msp, (startX, startY), (endX, endY))
 
             # pg.dragTo(end_x, end_y, button="left")  # this is where the line gets drawn
-            if stroke % 1 == 0:
+            if stroke % 10 == 0:
                 print(f"stroke # {stroke} {startX} {startY} {endX} {endY}")
 
 
@@ -227,6 +255,7 @@ def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
         print(cv)
         print(msp)
         print(art_direction)
+        
     if result == "6":  # show size and Style buttons
         wait_loop(WAIT_SECONDS)
         pg.moveTo(msp.brush_size_btn)
@@ -264,7 +293,7 @@ def display_menu(msp, cv, art_direction, SPECIFY_NUM_TICKS):
 def main():
 
     config = configparser.ConfigParser()
-    config.read("art_direction.cfg")
+    config.read("config/art_direction.cfg")
 
     art_direction = as_dict(config)
 

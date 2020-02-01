@@ -1,9 +1,9 @@
 Pynter 0.1.0
 
-In Art Direction, similar to PALETTE, implement Brushes to choose
-Implement specific brush, specific size...
-
+Implement specific color- change thresholds
 Implement end-to-end
+Force it to re-read the art-direction when paused for menu, make that a menu option.
+
 
 Start and/or end at edge of Canvas
 border-to-border

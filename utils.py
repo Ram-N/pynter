@@ -37,8 +37,8 @@ BRUSH_STYLES = {
     "brush": (1, 1),
     "callig brush1": (1, 2),
     "callig brush2": (1, 3),
-    #    "Airbrush": (1, 4),
-    #    "oil": (2, 1),
+    "Airbrush": (1, 4),
+    "oil": (2, 1),
     "crayon": (2, 2),
     "marker": (2, 3),
     "pencil": (2, 4),
@@ -46,6 +46,14 @@ BRUSH_STYLES = {
 }
 
 BRUSH_SIZES = {"8px": 0, "16px": 1, "30px": 2, "40px": 3}
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 
 def wait_loop(wait_time):
@@ -93,14 +101,50 @@ def is_invalid(art_direction, cv):
 def get_active_brushes(art_direction):
 
     active_brushes = {}
-    for v in art_direction["BRUSHES"].values():
-        active_brushes[v[0]] = BRUSH_STYLES[v[0]]
+
+    if type(art_direction["BRUSHES"]) is dict:
+        br_values = [v[0] for v in art_direction["BRUSHES"].values()]
+    if type(art_direction["BRUSHES"]) is list:
+        br_values = art_direction["BRUSHES"]
+    print(br_values)
+    for v in br_values:
+        active_brushes[v] = BRUSH_STYLES[v]
     return active_brushes
+
+
+def get_active_sizes(art_direction):
+
+    active_sizes = {}
+
+    if type(art_direction["BRUSH-SIZES"]) is dict:
+        br_values = [v[0] for v in art_direction["BRUSH-SIZES"].values()]
+    if type(art_direction["BRUSH-SIZES"]) is list:
+        br_values = art_direction["BRUSH-SIZES"]
+    print(br_values)
+    for v in br_values:
+        active_sizes[v] = BRUSH_SIZES[v]
+    return active_sizes
+
+
+def get_thresholds(art_direction):
+
+    thresholds = {}
+    if type(art_direction["CHANGE_THRESHOLD"]) is dict:
+        for k, v in art_direction["CHANGE_THRESHOLD"].items():
+            if is_number(v[0]):
+                thresholds[k] = float(v[0])
+            if v[0] == "rare":
+                thresholds[k] = 98
+            if v[0] == "medium":
+                thresholds[k] = 90
+            if v[0] == "frequent":
+                thresholds[k] = 80
+    return thresholds
 
 
 def get_color_index_dict(color_list):
     """ Returns a dictionary of Colors and btn_indices, based on the color_list provided"""
-    print(color_list)
+    print(f"Color list {color_list}")
     print([(k in ALL_COLORS) for k in color_list])
     return dict((k, ALL_COLORS[k]) for k in color_list if k in ALL_COLORS)
 
