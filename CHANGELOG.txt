@@ -1,5 +1,8 @@
 CHANGELOG
 
+2/2/20
+
+** Implemented Edge points
 
 2/1/20
 ** Implemented SIZES in Config File. Comment/uncomment to use any brush

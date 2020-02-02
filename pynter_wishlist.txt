@@ -1,12 +1,9 @@
 Pynter 0.1.0
 
-Implement specific color- change thresholds
 Implement end-to-end
 Force it to re-read the art-direction when paused for menu, make that a menu option.
+Implement Logging. and write the final set of Art directs to Log
 
-
-Start and/or end at edge of Canvas
-border-to-border
 Top down only...(spotlight?)
 
 Add an "Active COLOR PALETTE" (BLUES, BRIGHT, PASTEL etc)
