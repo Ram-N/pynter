@@ -11,14 +11,15 @@ def get_start_pt(cv, art_direction, specific=""):
     """Return X Y coords per art_direction directives specified"""
 
     # by default, assume Random starting point
-    if 'random' in art_direction['START_POINTS']:
+    if "random" in art_direction["START_POINTS"]:
         startX = random.randint(cv.origin[0], cv.endpoint[0])
         startY = random.randint(cv.origin[1], cv.endpoint[1])
-        print(f"starting at {startX} {startY}")
+        if VERBOSE:
+            print(f"starting at {startX} {startY}")
 
-    if 'border' in art_direction['START_POINTS']:
-        b = art_direction['START_POINTS'].index('border')
-        bd = art_direction['START_POINTS'][b+1] #next element has the direction.
+    if "border" in art_direction["START_POINTS"]:
+        b = art_direction["START_POINTS"].index("border")
+        bd = art_direction["START_POINTS"][b + 1]  # next element has the direction.
         startX, startY = pick_border_point(cv, bd)
 
     return startX, startY
@@ -81,9 +82,9 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
                     if (end_y < cv.endpoint[1]) and (end_y > cv.origin[1]):
                         foundy = True
 
-        if "border" in llen: #must end at the canvas border
-            #Ignoring length and angles
-            end_x, end_y = pick_border_point(cv, '')
+        if "border" in llen:  # must end at the canvas border
+            # Ignoring length and angles
+            end_x, end_y = pick_border_point(cv, "")
             foundx, foundy = True, True
 
         if "random" in llen:
@@ -96,8 +97,6 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
             stroke_len = random.randint(int(cv.width * 0.6), int(cv.width) * 0.95)
         if llen[0].isnumeric():  # exact length given
             stroke_len = int(llen[0])
-
-        
 
         if not foundx:
             DIRX = random.choice([1, -1])
@@ -124,38 +123,39 @@ def get_stroke_endpoint(cv, art_direction, startX, startY, specific=""):
             print(f"theta {math.sin(theta)} stroke {stroke_len}")
             print(cv)
 
-    print(
-        f"from {startX} {startY} to {end_x} {end_y} | cv {cv.origin} {cv.endpoint}  {safety}"
-    )
+    if VERBOSE:
+        print(
+            f"from {startX} {startY} to {end_x} {end_y} | cv {cv.origin} {cv.endpoint}  {safety}"
+        )
     return (end_x, end_y)
 
-def pick_border_point(cv, border =''):
+
+def pick_border_point(cv, border=""):
     """ returns a point from the edge of the canvas per directiorns
 
     border can be one of {any, left, right, top, bottom}
     """
 
-    if (border == '') or (border=='any'):
-        border = random.choice(['top', 'bottom', 'left', 'right'])
+    if (border == "") or (border == "any"):
+        border = random.choice(["top", "bottom", "left", "right"])
 
-    if border == 'top':
-        y = cv.origin[1]+5
-        x = random.randint(cv.origin[0]+5, cv.endpoint[0]-5)
+    if border == "top":
+        y = cv.origin[1] + 5
+        x = random.randint(cv.origin[0] + 5, cv.endpoint[0] - 5)
 
-    if border == 'bottom':
-        y = cv.endpoint[1] -5
-        x = random.randint(cv.origin[0]+5, cv.endpoint[0]-5)
+    if border == "bottom":
+        y = cv.endpoint[1] - 5
+        x = random.randint(cv.origin[0] + 5, cv.endpoint[0] - 5)
 
-    if border == 'left':
+    if border == "left":
         x = cv.origin[0] + 5
-        y = random.randint(cv.origin[1]+5, cv.endpoint[1]-5)
+        y = random.randint(cv.origin[1] + 5, cv.endpoint[1] - 5)
 
-    if border == 'right':
+    if border == "right":
         x = cv.endpoint[0] - 5
-        y = random.randint(cv.origin[1]+5, cv.endpoint[1]-5)
+        y = random.randint(cv.origin[1] + 5, cv.endpoint[1] - 5)
 
-
-    return (x,y)
+    return (x, y)
 
 
 def draw_borders(msp, cv):
@@ -192,3 +192,23 @@ def draw_borders(msp, cv):
         (cv.endpoint[0] - 5, cv.endpoint[1] - 5),
         color="blue",
     )
+
+
+def curve(cv):
+    startX = random.randint(cv.origin[0], cv.origin[2])
+    startY = random.randint(cv.origin[1], cv.origin[3])
+    endX = random.randint(cv.origin[0], cv.origin[2])
+    endY = random.randint(cv.origin[1], cv.origin[3])
+
+    pg.moveTo(startX, startY)
+    dist = abs(endX - startX)
+    for _ in range(dist):
+        current = pg.position()
+        currX = current[0]
+        currY = current[1]
+        if endX > startX:
+            newX = currX + 1
+        if endX < startX:
+            newX = currX - 1
+        newY = cv.center[1] + math.tan(newX)  # *(random.randint(2, height/2))
+        pg.dragTo(newX, newY)

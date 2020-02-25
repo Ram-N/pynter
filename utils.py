@@ -1,4 +1,5 @@
 # utility functions
+import configparser
 import math
 import random
 import sys
@@ -171,3 +172,23 @@ def as_dict(config):
         for key, val in config.items(section):
             the_dict[section][key] = val
     return the_dict
+
+
+def  read_art_directives():
+    ''' Read the lastest version of art_direction.cfg via configparser'''
+
+    config = configparser.ConfigParser()
+    config.read("config/art_direction.cfg")
+
+    art_direction = as_dict(config)
+
+    for section in config.sections():
+        for key in config[section]:
+            _list = config[section][key]
+            DIRS = [e.strip() for e in _list.split(",")]
+            if len(config[section]) > 1:
+                art_direction[section][key] = DIRS  # nested
+            else:
+                art_direction[section] = DIRS
+
+    return art_direction

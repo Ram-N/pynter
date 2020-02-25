@@ -129,7 +129,9 @@ class MSPaint:
             y = self.style_TR[1] + (btn_idx_y - 1) * self.brush_style_offset[1]
             return (x, y)
 
-    def pick_item(self, item_type="color", selected="", palette={}, brushes={}, sizes={}):
+    def pick_item(
+        self, item_type="color", selected="", palette={}, brushes={}, sizes={}
+    ):
 
         if item_type == "color":
             if selected == "":
@@ -139,7 +141,7 @@ class MSPaint:
                 palette = get_color_index_dict([color])
                 if VERBOSE:
                     print(color)
-            print(f' switching to {color}')
+            print(f" switching to {color}")
             color_xy = self.get_selected_items_coords(item_type, color, palette=palette)
             # print(f"{color} @ {color_xy}")
             pg.moveTo(color_xy)
@@ -152,10 +154,10 @@ class MSPaint:
 
             if selected == "":
                 selected = random.choice(list(sizes.keys()))
-                
+
             b_index = sizes[selected]
-            print(b_index)
-            brush_size_y = self.size_options[b_index] #convert index to y coord
+            print(f" switching to Brush size{b_index} {selected}")
+            brush_size_y = self.size_options[b_index]  # convert index to y coord
 
             pg.moveTo(self.brush_size_btn[0], brush_size_y)
             time.sleep(0.25)
@@ -174,6 +176,8 @@ class MSPaint:
                 style = selected
 
             pos_xy = self.get_selected_items_coords(item_type, style)
+            print(f"{item_type} {style} @ {pos_xy}")
+
             if VERBOSE:
                 print(f"{item_type} {style} @ {pos_xy}")
             pg.moveTo(pos_xy)

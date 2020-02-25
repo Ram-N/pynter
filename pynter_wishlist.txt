@@ -1,7 +1,11 @@
 Pynter 0.1.0
 
-Implement end-to-end
+Progressively changing: colors, sizes, brush styles
+Broadly horizontal or vertical lines, not all angles
+
 Force it to re-read the art-direction when paused for menu, make that a menu option.
+Make videos (OBS)
+Try MSpaint in a new desktop
 Implement Logging. and write the final set of Art directs to Log
 
 Top down only...(spotlight?)
